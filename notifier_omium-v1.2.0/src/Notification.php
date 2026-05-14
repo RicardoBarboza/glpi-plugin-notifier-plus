@@ -72,7 +72,15 @@ class Notification extends CommonDBTM
             'notify_projecttask_direct' => 1,
             'notify_projecttask_group'  => 1,
             'sound_enabled'             => 1,
+            'sound_new'                 => 1,
+            'sound_mine'                => 1,
+            'sound_team'                => 1,
+            'sound_other'               => 1,
+            'sound_ended'               => 0,
             'notify_others'             => 0,
+            'show_resolved'             => 1,
+            'show_closed'               => 1,
+            'resolved_closed_style'     => 'separate',
             'update_message_style'      => 'priority',
         ];
     }
@@ -149,7 +157,7 @@ class Notification extends CommonDBTM
         if (!$row) {
             return self::$prefsCache[$users_id] = $prefs;
         }
-        $stringCols = ['update_message_style'];
+        $stringCols = ['update_message_style', 'resolved_closed_style'];
         foreach ($prefs as $k => $_default) {
             if (array_key_exists($k, $row)) {
                 if (in_array($k, $stringCols, true)) {
@@ -175,13 +183,19 @@ class Notification extends CommonDBTM
         }
 
         $allowed = array_keys(self::getDefaultPreferences());
-        $stringCols = ['update_message_style'];
+        $stringCols = ['update_message_style', 'resolved_closed_style'];
         $validStyles = ['priority', 'combined', 'multiple'];
+        $validResolvedClosedStyles = ['separate', 'ended'];
         $row = ['users_id' => $users_id];
         foreach ($allowed as $col) {
             if (in_array($col, $stringCols, true)) {
-                $val = $input[$col] ?? 'priority';
-                $row[$col] = in_array($val, $validStyles, true) ? $val : 'priority';
+                if ($col === 'resolved_closed_style') {
+                    $val = $input[$col] ?? 'separate';
+                    $row[$col] = in_array($val, $validResolvedClosedStyles, true) ? $val : 'separate';
+                } else {
+                    $val = $input[$col] ?? 'priority';
+                    $row[$col] = in_array($val, $validStyles, true) ? $val : 'priority';
+                }
             } else {
                 $row[$col] = isset($input[$col]) && (int)$input[$col] ? 1 : 0;
             }
@@ -1124,6 +1138,30 @@ class Notification extends CommonDBTM
         }
 
         return $users;
+    }
+
+    /**
+     * Returns true if the given user has the READALL right on tickets (bit 65536).
+     * This is used to control visibility of the "Demais" tab and notify_others toggle.
+     */
+    public static function canSeeOthers(int $users_id): bool
+    {
+        global $DB;
+        $rs = $DB->request([
+            'COUNT'      => 'cpt',
+            'FROM'       => 'glpi_profilerights AS pr',
+            'INNER JOIN' => [
+                'glpi_profiles_users AS pu' => [
+                    'ON' => ['pu' => 'profiles_id', 'pr' => 'profiles_id'],
+                ],
+            ],
+            'WHERE' => [
+                'pu.users_id' => $users_id,
+                'pr.name'     => 'ticket',
+                new QueryExpression('(`pr`.`rights` & 16384) = 16384'),
+            ],
+        ]);
+        return (int)($rs->current()['cpt'] ?? 0) > 0;
     }
 
     /**

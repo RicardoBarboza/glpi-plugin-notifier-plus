@@ -176,3 +176,26 @@ msgstr "Resolvidos"
 
 msgid "Fechados"
 msgstr "Fechados"
+
+
+msgid "Encerrados"
+msgstr "Encerrados"
+
+msgid "Mostrar chamados resolvidos"
+msgstr "Mostrar chamados resolvidos"
+
+msgid "Mostrar chamados fechados"
+msgstr "Mostrar chamados fechados"
+
+msgid "Exibição de encerrados"
+msgstr "Exibição de encerrados"
+
+msgid "Separados (Resolvidos | Fechados)"
+msgstr "Separados (Resolvidos | Fechados)"
+
+msgid "Unificados (Encerrados)"
+msgstr "Unificados (Encerrados)"
+
+
+msgid "Som por fila"
+msgstr "Som por fila"

@@ -1,4 +1,4 @@
-# Notifier plugin — Dutch (nl_NL)
+# Notifier plugin — English (en_GB)
 # Copyright (C) 2024-2026 DVBNL
 # This file is distributed under the same license as the Notifier plugin.
 #
@@ -9,166 +9,189 @@ msgstr ""
 "POT-Creation-Date: 2026-04-15 00:00+0000\n"
 "PO-Revision-Date: 2026-04-15 00:00+0000\n"
 "Last-Translator: DVBNL\n"
-"Language-Team: Nederlands\n"
-"Language: nl_NL\n"
+"Language-Team: English\n"
+"Language: en_GB\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "Notifier - In-app notifications"
-msgstr "Notifier - In-app notificaties"
+msgstr "Notifier - In-app notifications"
 
 msgid "Notifier"
 msgstr "Notifier"
 
 msgid "Notifications"
-msgstr "Notificaties"
+msgstr "Notifications"
 
 msgid "Notification"
 msgid_plural "Notifications"
-msgstr[0] "Notificatie"
-msgstr[1] "Notificaties"
+msgstr[0] "Notification"
+msgstr[1] "Notifications"
 
 msgid "Mark all as read"
-msgstr "Alles markeren als gelezen"
+msgstr "Mark all as read"
 
 msgid "Mark as read"
-msgstr "Markeren als gelezen"
+msgstr "Mark as read"
 
 msgid "Mark as unread"
-msgstr "Markeren als ongelezen"
+msgstr "Mark as unread"
 
 msgid "No notifications"
-msgstr "Geen notificaties"
+msgstr "No notifications"
 
 msgid "Minimize"
-msgstr "Minimaliseren"
+msgstr "Minimize"
 
 msgid "Expand notifications"
-msgstr "Notificaties tonen"
+msgstr "Expand notifications"
 
 msgid "New item concerning you"
-msgstr "Nieuw item dat jou betreft"
+msgstr "New item concerning you"
 
 msgid "Status changed"
-msgstr "Status gewijzigd"
+msgstr "Status changed"
 
 msgid "Item updated"
-msgstr "Item bijgewerkt"
+msgstr "Item updated"
 
 msgid "New project task concerning you"
-msgstr "Nieuwe projecttaak die jou betreft"
+msgstr "New project task concerning you"
 
 msgid "Project task updated"
-msgstr "Projecttaak bijgewerkt"
+msgstr "Project task updated"
 
 msgid "New comment"
-msgstr "Nieuwe reactie"
+msgstr "New comment"
 
 msgid "New task"
-msgstr "Nieuwe taak"
+msgstr "New task"
 
 msgid "Solution proposed"
-msgstr "Oplossing voorgesteld"
+msgstr "Solution proposed"
 
 msgid "You have been assigned"
-msgstr "Je bent toegewezen"
+msgstr "You have been assigned"
 
 msgid "Your group has been assigned"
-msgstr "Jouw groep is toegewezen"
+msgstr "Your group has been assigned"
 
 msgid "You have been added to a project task"
-msgstr "Je bent toegevoegd aan een projecttaak"
+msgstr "You have been added to a project task"
 
 msgid "You're all caught up."
-msgstr "Alles is bijgewerkt."
+msgstr "You're all caught up."
 
 msgid "All"
-msgstr "Alle"
+msgstr "All"
 
 msgid "Unread"
-msgstr "Ongelezen"
+msgstr "Unread"
 
 msgid "Settings"
-msgstr "Instellingen"
+msgstr "Settings"
 
 msgid "Notification preferences"
-msgstr "Notificatievoorkeuren"
+msgstr "Notification preferences"
 
 msgid "Choose which updates you want to receive. Direct updates are about items assigned to you; group updates are about items assigned to one of your groups."
-msgstr "Kies welke updates je wilt ontvangen. Directe updates gaan over items die aan jou zijn toegewezen; groepupdates gaan over items die aan een van je groepen zijn toegewezen."
+msgstr "Choose which updates you want to receive. Direct updates are about items assigned to you; group updates are about items assigned to one of your groups."
 
 msgid "Assigned to me"
-msgstr "Aan mij toegewezen"
+msgstr "Assigned to me"
 
 msgid "Assigned to my group"
-msgstr "Aan mijn groep toegewezen"
+msgstr "Assigned to my group"
 
 msgid "Tickets"
 msgstr "Tickets"
 
 msgid "Changes"
-msgstr "Wijzigingen"
+msgstr "Changes"
 
 msgid "Problems"
-msgstr "Problemen"
+msgstr "Problems"
 
 msgid "Project tasks"
-msgstr "Projecttaken"
+msgstr "Project tasks"
 
 msgid "Save"
-msgstr "Opslaan"
+msgstr "Save"
 
 msgid "Cancel"
-msgstr "Annuleren"
+msgstr "Cancel"
 
 msgid "Preferences saved"
-msgstr "Voorkeuren opgeslagen"
+msgstr "Preferences saved"
 
 msgid "Close"
-msgstr "Sluiten"
+msgstr "Close"
 
 msgid "{n} updates"
 msgstr "{n} updates"
 
 msgid "Show all updates"
-msgstr "Alle updates tonen"
+msgstr "Show all updates"
 
 msgid "Hide updates"
-msgstr "Updates verbergen"
+msgstr "Hide updates"
 
 msgid "Notificar movimentações em chamados que tenho acesso"
-msgstr "Meldingen ontvangen voor tickets waartoe ik toegang heb"
+msgstr "Notify activity on tickets I have access to"
 
 
 msgid "New followup"
-msgstr "Nieuwe opvolging"
+msgstr "New followup"
 
 msgid "Category changed"
-msgstr "Categorie gewijzigd"
+msgstr "Category changed"
 
 msgid "Priority changed"
-msgstr "Prioriteit gewijzigd"
+msgstr "Priority changed"
 
 msgid "Actors changed"
-msgstr "Actoren gewijzigd"
+msgstr "Actors changed"
 
 msgid "Description updated"
-msgstr "Omschrijving bijgewerkt"
+msgstr "Description updated"
 
 
 msgid "Multiple changes"
-msgstr "Meerdere wijzigingen"
+msgstr "Multiple changes"
 
 msgid "Estilo de mensagem de atualização"
-msgstr "Stijl van updatebericht"
+msgstr "Update message style"
 
 msgid "Mensagem prioritária"
-msgstr "Prioriteitsbericht"
+msgstr "Priority message"
 
 msgid "Mensagens combinadas"
-msgstr "Gecombineerde berichten"
+msgstr "Combined messages"
 
 msgid "Múltiplas alterações"
-msgstr "Meerdere wijzigingen"
+msgstr "Multiple changes"
+
+
+msgid "Encerrados"
+msgstr "Ended"
+
+msgid "Mostrar chamados resolvidos"
+msgstr "Show resolved tickets"
+
+msgid "Mostrar chamados fechados"
+msgstr "Show closed tickets"
+
+msgid "Exibição de encerrados"
+msgstr "Ended tickets display"
+
+msgid "Separados (Resolvidos | Fechados)"
+msgstr "Separate (Resolved | Closed)"
+
+msgid "Unificados (Encerrados)"
+msgstr "Unified (Ended)"
+
+
+msgid "Som por fila"
+msgstr "Sound per queue"

@@ -1024,3 +1024,43 @@
     background: #1e2327;
     color: #ffffff;
 }
+
+/* ====== Sound sub-toggles ====== */
+.notifier-pref-sound-subtoggle {
+    background: rgba(255,255,255,.04);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: -4px 0 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.notifier-sound-sub-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.notifier-pref-sound-sublabel {
+    color: #b0bec5;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.notifier-pref-sound-sublabel .fas {
+    color: #6b7a8d;
+    font-size: 11px;
+}
+
+.notifier-switch-sm .notifier-switch-track {
+    width: 32px;
+    height: 18px;
+}
+
+.notifier-switch-sm .notifier-switch-thumb {
+    width: 14px;
+    height: 14px;
+}

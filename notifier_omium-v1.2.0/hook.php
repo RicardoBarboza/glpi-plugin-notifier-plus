@@ -57,8 +57,16 @@ function plugin_notifier_install(): bool
             `notify_projecttask_direct`   TINYINT NOT NULL DEFAULT 1,
             `notify_projecttask_group`    TINYINT NOT NULL DEFAULT 1,
             `sound_enabled`               TINYINT NOT NULL DEFAULT 1,
+            `sound_new`                   TINYINT NOT NULL DEFAULT 1,
+            `sound_mine`                  TINYINT NOT NULL DEFAULT 1,
+            `sound_team`                  TINYINT NOT NULL DEFAULT 1,
+            `sound_other`                 TINYINT NOT NULL DEFAULT 1,
+            `sound_ended`                 TINYINT NOT NULL DEFAULT 0,
             `notify_others`               TINYINT NOT NULL DEFAULT 0,
             `update_message_style`        VARCHAR(20) NOT NULL DEFAULT 'priority',
+            `show_resolved`               TINYINT NOT NULL DEFAULT 1,
+            `show_closed`                 TINYINT NOT NULL DEFAULT 1,
+            `resolved_closed_style`       VARCHAR(10) NOT NULL DEFAULT 'separate',
             `date_mod`                    TIMESTAMP NULL DEFAULT NULL,
             PRIMARY KEY (`users_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET={$default_charset} COLLATE={$default_collation} ROW_FORMAT=DYNAMIC";
@@ -72,10 +80,46 @@ function plugin_notifier_install(): bool
                 $DB->error()
             );
         }
+        if (!$DB->fieldExists('glpi_plugin_notifier_preferences', 'sound_new')) {
+            $DB->doQueryOrDie("ALTER TABLE `glpi_plugin_notifier_preferences` ADD COLUMN `sound_new` TINYINT NOT NULL DEFAULT 1 AFTER `sound_enabled`", $DB->error());
+        }
+        if (!$DB->fieldExists('glpi_plugin_notifier_preferences', 'sound_mine')) {
+            $DB->doQueryOrDie("ALTER TABLE `glpi_plugin_notifier_preferences` ADD COLUMN `sound_mine` TINYINT NOT NULL DEFAULT 1 AFTER `sound_new`", $DB->error());
+        }
+        if (!$DB->fieldExists('glpi_plugin_notifier_preferences', 'sound_team')) {
+            $DB->doQueryOrDie("ALTER TABLE `glpi_plugin_notifier_preferences` ADD COLUMN `sound_team` TINYINT NOT NULL DEFAULT 1 AFTER `sound_mine`", $DB->error());
+        }
+        if (!$DB->fieldExists('glpi_plugin_notifier_preferences', 'sound_other')) {
+            $DB->doQueryOrDie("ALTER TABLE `glpi_plugin_notifier_preferences` ADD COLUMN `sound_other` TINYINT NOT NULL DEFAULT 1 AFTER `sound_team`", $DB->error());
+        }
+        if (!$DB->fieldExists('glpi_plugin_notifier_preferences', 'sound_ended')) {
+            $DB->doQueryOrDie("ALTER TABLE `glpi_plugin_notifier_preferences` ADD COLUMN `sound_ended` TINYINT NOT NULL DEFAULT 0 AFTER `sound_other`", $DB->error());
+        }
         if (!$DB->fieldExists('glpi_plugin_notifier_preferences', 'notify_others')) {
             $DB->doQueryOrDie(
                 "ALTER TABLE `glpi_plugin_notifier_preferences`
-                 ADD COLUMN `notify_others` TINYINT NOT NULL DEFAULT 0 AFTER `sound_enabled`",
+                 ADD COLUMN `notify_others` TINYINT NOT NULL DEFAULT 0 AFTER `sound_ended`",
+                $DB->error()
+            );
+        }
+        if (!$DB->fieldExists('glpi_plugin_notifier_preferences', 'show_resolved')) {
+            $DB->doQueryOrDie(
+                "ALTER TABLE `glpi_plugin_notifier_preferences`
+                 ADD COLUMN `show_resolved` TINYINT NOT NULL DEFAULT 1 AFTER `update_message_style`",
+                $DB->error()
+            );
+        }
+        if (!$DB->fieldExists('glpi_plugin_notifier_preferences', 'show_closed')) {
+            $DB->doQueryOrDie(
+                "ALTER TABLE `glpi_plugin_notifier_preferences`
+                 ADD COLUMN `show_closed` TINYINT NOT NULL DEFAULT 1 AFTER `show_resolved`",
+                $DB->error()
+            );
+        }
+        if (!$DB->fieldExists('glpi_plugin_notifier_preferences', 'resolved_closed_style')) {
+            $DB->doQueryOrDie(
+                "ALTER TABLE `glpi_plugin_notifier_preferences`
+                 ADD COLUMN `resolved_closed_style` VARCHAR(10) NOT NULL DEFAULT 'separate' AFTER `show_closed`",
                 $DB->error()
             );
         }

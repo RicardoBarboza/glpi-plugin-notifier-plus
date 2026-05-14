@@ -172,3 +172,26 @@ msgstr "Mensajes combinados"
 
 msgid "Múltiplas alterações"
 msgstr "Múltiples cambios"
+
+
+msgid "Encerrados"
+msgstr "Cerrados"
+
+msgid "Mostrar chamados resolvidos"
+msgstr "Mostrar tickets resueltos"
+
+msgid "Mostrar chamados fechados"
+msgstr "Mostrar tickets cerrados"
+
+msgid "Exibição de encerrados"
+msgstr "Visualización de cerrados"
+
+msgid "Separados (Resolvidos | Fechados)"
+msgstr "Separados (Resueltos | Cerrados)"
+
+msgid "Unificados (Encerrados)"
+msgstr "Unificados (Cerrados)"
+
+
+msgid "Som por fila"
+msgstr "Sonido por cola"

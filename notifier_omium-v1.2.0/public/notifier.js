@@ -12,6 +12,7 @@
     var pollTimer         = null;
     var pollInFlight      = false;
     var lastUnreadGroups  = null;
+    var lastUnreadByTab   = null;
     var lastSoundPlayed   = 0;
 
     // ---------------------------------------------------------------- sound
@@ -56,6 +57,7 @@
         tabOther:            'Demais',
         tabResolved:         'Resolvidos',
         tabClosed:           'Fechados',
+        tabEnded:            'Encerrados',
         settings:            'Settings',
         preferencesTitle:    'Notification preferences',
         preferencesIntro:    'Choose which updates you want to receive. Direct updates are about items assigned to you; group updates are about items assigned to one of your groups.',
@@ -78,10 +80,15 @@
         items: [],
         unread: 0,
         unreadGroups: 0,
-        unreadByTab: { new: 0, mine: 0, team: 0, other: 0, resolved: 0, closed: 0 },
+        unreadByTab: { new: 0, mine: 0, team: 0, other: 0, resolved: 0, closed: 0, ended: 0 },
         tab: loadTab(),
         expanded: new Set(),
-        soundEnabled: true
+        soundEnabled: true,
+        soundByTab: { new: true, mine: true, team: true, other: true, ended: false },
+        canSeeOthers: false,
+        showResolved: true,
+        showClosed: true,
+        resolvedClosedStyle: 'separate'
     };
 
     // ------------------------------------------------------------------ utils
@@ -132,7 +139,7 @@
         return Math.floor(diff / 86400) + 'd';
     }
 
-    var VALID_TABS = ['all', 'new', 'mine', 'team', 'other', 'resolved', 'closed'];
+    var VALID_TABS = ['all', 'new', 'mine', 'team', 'other', 'resolved', 'closed', 'ended'];
     function loadTab() {
         try {
             var v = localStorage.getItem(LS_TAB_KEY);
@@ -172,9 +179,10 @@
             +       '<button type="button" class="notifier-bell-tab" data-tab="new"  role="tab"><span class="tab-label">' + escapeHtml(T.tabNew)   + '</span><span class="tab-badge" hidden>0</span></button>'
             +       '<button type="button" class="notifier-bell-tab" data-tab="mine" role="tab"><span class="tab-label">' + escapeHtml(T.tabMine)  + '</span><span class="tab-badge" hidden>0</span></button>'
             +       '<button type="button" class="notifier-bell-tab" data-tab="team" role="tab"><span class="tab-label">' + escapeHtml(T.tabTeam)  + '</span><span class="tab-badge" hidden>0</span></button>'
-            +       '<button type="button" class="notifier-bell-tab" data-tab="other" role="tab"><span class="tab-label">' + escapeHtml(T.tabOther) + '</span><span class="tab-badge" hidden>0</span></button>'
-            +       '<button type="button" class="notifier-bell-tab" data-tab="resolved" role="tab"><span class="tab-label">' + escapeHtml(T.tabResolved) + '</span><span class="tab-badge" hidden>0</span></button>'
-            +       '<button type="button" class="notifier-bell-tab" data-tab="closed" role="tab"><span class="tab-label">' + escapeHtml(T.tabClosed) + '</span><span class="tab-badge" hidden>0</span></button>'
+            +       '<button type="button" class="notifier-bell-tab notifier-tab-others" data-tab="other" role="tab"><span class="tab-label">' + escapeHtml(T.tabOther) + '</span><span class="tab-badge" hidden>0</span></button>'
+            +       '<button type="button" class="notifier-bell-tab notifier-tab-resolved" data-tab="resolved" role="tab"><span class="tab-label">' + escapeHtml(T.tabResolved) + '</span><span class="tab-badge" hidden>0</span></button>'
+            +       '<button type="button" class="notifier-bell-tab notifier-tab-closed" data-tab="closed" role="tab"><span class="tab-label">' + escapeHtml(T.tabClosed) + '</span><span class="tab-badge" hidden>0</span></button>'
+            +       '<button type="button" class="notifier-bell-tab notifier-tab-ended" data-tab="ended" role="tab"><span class="tab-label">' + escapeHtml(T.tabEnded || 'Encerrados') + '</span><span class="tab-badge" hidden>0</span></button>'
             +       '<button type="button" class="notifier-bell-markall">' + escapeHtml(T.markAllRead) + '</button>'
             +     '</div>'
             +   '</div>'
@@ -230,7 +238,18 @@
 
     function visibleItems() {
         var items = state.items.filter(function(i) { return !i.is_read; });
+
+        // Filter out resolved/closed if user disabled them
+        items = items.filter(function(i) {
+            if (i.category === 'resolved' && !state.showResolved) { return false; }
+            if (i.category === 'closed' && !state.showClosed) { return false; }
+            return true;
+        });
+
         if (state.tab === 'all') { return items; }
+        if (state.tab === 'ended') {
+            return items.filter(function(i) { return i.category === 'resolved' || i.category === 'closed'; });
+        }
         return items.filter(function(i) { return i.category === state.tab; });
     }
 
@@ -293,6 +312,24 @@
 
         var countEl = wrap.querySelector('.notifier-bell-panel-count');
         if (countEl) countEl.textContent = '(' + displayCount + ')';
+
+        // Show/hide tabs based on state
+        var othersTab = wrap.querySelector('.notifier-tab-others');
+        if (othersTab) { othersTab.hidden = !state.canSeeOthers; }
+
+        var resolvedTab = wrap.querySelector('.notifier-tab-resolved');
+        var closedTab = wrap.querySelector('.notifier-tab-closed');
+        var endedTab = wrap.querySelector('.notifier-tab-ended');
+
+        if (state.resolvedClosedStyle === 'ended') {
+            if (resolvedTab) { resolvedTab.hidden = true; }
+            if (closedTab) { closedTab.hidden = true; }
+            if (endedTab) { endedTab.hidden = !state.showResolved && !state.showClosed; }
+        } else {
+            if (resolvedTab) { resolvedTab.hidden = !state.showResolved; }
+            if (closedTab) { closedTab.hidden = !state.showClosed; }
+            if (endedTab) { endedTab.hidden = true; }
+        }
 
         var tabBtns = wrap.querySelectorAll('.notifier-bell-tab');
         tabBtns.forEach(function(btn) {
@@ -566,14 +603,36 @@
             +         '<span class="notifier-switch-slider"></span>'
             +       '</label>'
             +     '</div>'
-            +     '<div class="notifier-pref-sound">'
+            +     '<div class="notifier-pref-sound-subtoggle" id="notifier-sound-subtoggle">'
+            +       '<div class="notifier-sound-sub-item">'
+            +         '<label class="notifier-pref-sound-sublabel"><i class="fas fa-plus-circle"></i> ' + escapeHtml(T.tabNew || 'Novos') + '</label>'
+            +         '<label class="notifier-switch notifier-switch-sm"><input type="checkbox" data-pref="sound_new" checked><span class="notifier-switch-slider"></span></label>'
+            +       '</div>'
+            +       '<div class="notifier-sound-sub-item">'
+            +         '<label class="notifier-pref-sound-sublabel"><i class="fas fa-user"></i> ' + escapeHtml(T.tabMine || 'Meus') + '</label>'
+            +         '<label class="notifier-switch notifier-switch-sm"><input type="checkbox" data-pref="sound_mine" checked><span class="notifier-switch-slider"></span></label>'
+            +       '</div>'
+            +       '<div class="notifier-sound-sub-item">'
+            +         '<label class="notifier-pref-sound-sublabel"><i class="fas fa-users"></i> ' + escapeHtml(T.tabTeam || 'Equipe') + '</label>'
+            +         '<label class="notifier-switch notifier-switch-sm"><input type="checkbox" data-pref="sound_team" checked><span class="notifier-switch-slider"></span></label>'
+            +       '</div>'
+            +       (state.canSeeOthers ? '<div class="notifier-sound-sub-item">'
+            +         '<label class="notifier-pref-sound-sublabel"><i class="fas fa-bell"></i> ' + escapeHtml(T.tabOther || 'Demais') + '</label>'
+            +         '<label class="notifier-switch notifier-switch-sm"><input type="checkbox" data-pref="sound_other" checked><span class="notifier-switch-slider"></span></label>'
+            +       '</div>' : '')
+            +       (state.showResolved || state.showClosed ? '<div class="notifier-sound-sub-item">'
+            +         '<label class="notifier-pref-sound-sublabel notifier-sound-ended-label"><i class="fas fa-check-circle"></i> ' + escapeHtml(state.resolvedClosedStyle === 'ended' ? (T.tabEnded || 'Encerrados') : (T.tabResolved || 'Resolvidos') + ' / ' + (T.tabClosed || 'Fechados')) + '</label>'
+            +         '<label class="notifier-switch notifier-switch-sm"><input type="checkbox" data-pref="sound_ended"><span class="notifier-switch-slider"></span></label>'
+            +       '</div>' : '')
+            +     '</div>'
+            +     (state.canSeeOthers ? '<div class="notifier-pref-sound">'
             +       '<label class="notifier-pref-sound-label">'
             +         '<i class="fas fa-bell"></i> ' + escapeHtml(T.notifyOthers || 'Notificar movimentações em chamados que tenho acesso') + '</label>'
             +       '<label class="notifier-switch">'
             +         '<input type="checkbox" data-pref="notify_others">'
             +         '<span class="notifier-switch-slider"></span>'
             +       '</label>'
-            +     '</div>'
+            +     '</div>' : '')
             +     '<div class="notifier-pref-sound">'
             +       '<label class="notifier-pref-sound-label">'
             +         '<i class="fas fa-edit"></i> ' + escapeHtml(T.updateMessageStyle || 'Estilo de mensagem de atualização') + '</label>'
@@ -581,6 +640,30 @@
             +         '<option value="priority">' + escapeHtml(T.updateStylePriority || 'Mensagem prioritária') + '</option>'
             +         '<option value="combined">' + escapeHtml(T.updateStyleCombined || 'Mensagens combinadas') + '</option>'
             +         '<option value="multiple">' + escapeHtml(T.updateStyleMultiple || 'Múltiplas alterações') + '</option>'
+            +       '</select>'
+            +     '</div>'
+            +     '<div class="notifier-pref-sound">'
+            +       '<label class="notifier-pref-sound-label">'
+            +         '<i class="fas fa-check-circle"></i> ' + escapeHtml(T.showResolved || 'Mostrar chamados resolvidos') + '</label>'
+            +       '<label class="notifier-switch">'
+            +         '<input type="checkbox" data-pref="show_resolved" checked>'
+            +         '<span class="notifier-switch-slider"></span>'
+            +       '</label>'
+            +     '</div>'
+            +     '<div class="notifier-pref-sound">'
+            +       '<label class="notifier-pref-sound-label">'
+            +         '<i class="fas fa-lock"></i> ' + escapeHtml(T.showClosed || 'Mostrar chamados fechados') + '</label>'
+            +       '<label class="notifier-switch">'
+            +         '<input type="checkbox" data-pref="show_closed" checked>'
+            +         '<span class="notifier-switch-slider"></span>'
+            +       '</label>'
+            +     '</div>'
+            +     '<div class="notifier-pref-sound">'
+            +       '<label class="notifier-pref-sound-label">'
+            +         '<i class="fas fa-layer-group"></i> ' + escapeHtml(T.resolvedClosedStyle || 'Exibição de encerrados') + '</label>'
+            +       '<select class="notifier-pref-select" data-pref="resolved_closed_style">'
+            +         '<option value="separate">' + escapeHtml(T.resolvedClosedSeparate || 'Separados (Resolvidos | Fechados)') + '</option>'
+            +         '<option value="ended">' + escapeHtml(T.resolvedClosedEnded || 'Unificados (Encerrados)') + '</option>'
             +       '</select>'
             +     '</div>'
             +     '<div class="notifier-modal-toast" hidden><i class="fas fa-check-circle"></i> ' + escapeHtml(T.saved) + '</div>'
@@ -635,6 +718,14 @@
             .then(function(resp) {
                 var prefs = (resp && resp.preferences) || {};
                 state.soundEnabled = prefs['sound_enabled'] === undefined ? true : !!+prefs['sound_enabled'];
+
+                // Update sound_ended label dynamically based on resolved_closed_style
+                var endedLabel = overlay.querySelector('.notifier-sound-ended-label');
+                if (endedLabel) {
+                    var rcs = prefs['resolved_closed_style'];
+                    var isEnded = (rcs && rcs !== '0') ? rcs === 'ended' : state.resolvedClosedStyle === 'ended';
+                    endedLabel.textContent = isEnded ? (T.tabEnded || 'Encerrados') : (T.tabResolved || 'Resolvidos') + ' / ' + (T.tabClosed || 'Fechados');
+                }
             })
             .catch(function() {});
     }
@@ -646,7 +737,7 @@
             .then(function(resp) {
                 var prefs = (resp && resp.preferences) || {};
                 // Fields that default to OFF (0) when not set
-                var defaultOff = { 'notify_others': true };
+                var defaultOff = { 'notify_others': true, 'sound_ended': true }; // sound_ended defaults to OFF
                 overlay.querySelectorAll('input[data-pref]').forEach(function(input) {
                     var key = input.dataset.pref;
                     if (prefs[key] === undefined) {
@@ -655,11 +746,14 @@
                         input.checked = !!+prefs[key];
                     }
                 });
-                var selectDefaults = { 'update_message_style': 'priority' };
+                // Load string prefs - must use string value not numeric
+                var selectDefaults = { 'update_message_style': 'priority', 'resolved_closed_style': 'separate' };
                 overlay.querySelectorAll('select[data-pref]').forEach(function(select) {
                     var key = select.dataset.pref;
-                    var val = prefs[key] !== undefined ? prefs[key] : (selectDefaults[key] || '');
-                    if (val) { select.value = val; }
+                    var raw = prefs[key];
+                    // If server returned numeric 0, use default instead
+                    var val = (raw !== undefined && raw !== '0' && raw !== 0) ? String(raw) : selectDefaults[key];
+                    select.value = val || selectDefaults[key] || '';
                 });
                 state.soundEnabled = prefs['sound_enabled'] === undefined ? true : !!+prefs['sound_enabled'];
             })
@@ -681,8 +775,29 @@
         overlay.querySelectorAll('select[data-pref]').forEach(function(select) {
             params.append(select.dataset.pref, select.value);
         });
+
+        // If user just enabled resolved/closed tabs, mark existing notifications as read
+        // so they start fresh without being flooded by history
+        var showResolved = overlay.querySelector('input[data-pref="show_resolved"]');
+        var showClosed = overlay.querySelector('input[data-pref="show_closed"]');
+        if (showResolved && showResolved.checked && !state.showResolved) {
+            fetchJson(BASE_URL + '/ajax/markresolved.php').catch(function() {});
+        }
+        if (showClosed && showClosed.checked && !state.showClosed) {
+            fetchJson(BASE_URL + '/ajax/markclosed.php').catch(function() {});
+        }
         var saveBtn = overlay.querySelector('[data-action="save"]');
         saveBtn.disabled = true;
+
+        // Toggle visibility of sound sub-options when main sound toggle changes
+        var soundMainToggle = overlay.querySelector('input[data-pref="sound_enabled"]');
+        var soundSubtoggle = overlay.querySelector('#notifier-sound-subtoggle');
+        if (soundMainToggle && soundSubtoggle) {
+            soundSubtoggle.style.display = soundMainToggle.checked ? '' : 'none';
+            soundMainToggle.addEventListener('change', function() {
+                soundSubtoggle.style.display = this.checked ? '' : 'none';
+            });
+        }
 
         // Mint a fresh token: preferences.php rejects without it.
         fetchJson(BASE_URL + '/ajax/csrftoken.php')
@@ -905,15 +1020,58 @@
             state.items        = (data && data.items) || [];
             state.unread       = (data && data.unread) || 0;
             state.unreadGroups = (data && data.unread_groups) || 0;
-            state.unreadByTab  = (data && data.unread_by_tab) || { new: 0, mine: 0, team: 0, other: 0, resolved: 0, closed: 0 };
+            state.unreadByTab       = (data && data.unread_by_tab) || { new: 0, mine: 0, team: 0, other: 0, resolved: 0, closed: 0, ended: 0 };
+            state.canSeeOthers      = !!(data && data.can_see_others);
+            state.showResolved      = data && data.show_resolved !== undefined ? !!data.show_resolved : true;
+            state.showClosed        = data && data.show_closed !== undefined ? !!data.show_closed : true;
+            state.resolvedClosedStyle = (data && data.resolved_closed_style) || 'separate';
+            state.soundByTab = {
+                new:   data && data.sound_new   !== undefined ? !!data.sound_new   : true,
+                mine:  data && data.sound_mine  !== undefined ? !!data.sound_mine  : true,
+                team:  data && data.sound_team  !== undefined ? !!data.sound_team  : true,
+                other: data && data.sound_other !== undefined ? !!data.sound_other : true,
+                ended: data && data.sound_ended !== undefined ? !!data.sound_ended : false,
+            };
 
-            // Play sound when new notifications arrive (unread count increased).
-            if (lastUnreadGroups !== null && state.unreadGroups > lastUnreadGroups) {
-                if (state.soundEnabled !== false) {
-                    playNotificationSound();
+            // Recalculate unread counts excluding hidden categories
+            if (!state.showResolved) {
+                state.unreadByTab.resolved = 0;
+            }
+            if (!state.showClosed) {
+                state.unreadByTab.closed = 0;
+            }
+            if (!state.canSeeOthers) {
+                state.unreadByTab.other = 0;
+            }
+            // ended tab badge = resolved + closed
+            state.unreadByTab.ended = (state.unreadByTab.resolved || 0) + (state.unreadByTab.closed || 0);
+            // Recalculate total
+            state.unread = state.unreadByTab.new + state.unreadByTab.mine +
+                           state.unreadByTab.team + state.unreadByTab.other +
+                           state.unreadByTab.resolved + state.unreadByTab.closed;
+            state.unreadGroups = state.unread;
+
+            // Play sound when new notifications arrive — check per-tab sound preferences
+            if (lastUnreadGroups !== null && state.soundEnabled !== false) {
+                var prevByTab = lastUnreadByTab || {};
+                var shouldPlay = false;
+                ['new', 'mine', 'team'].forEach(function(tab) {
+                    if ((state.unreadByTab[tab] || 0) > (prevByTab[tab] || 0) && state.soundByTab[tab]) {
+                        shouldPlay = true;
+                    }
+                });
+                if ((state.unreadByTab.other || 0) > (prevByTab.other || 0) && state.soundByTab.other && state.canSeeOthers) {
+                    shouldPlay = true;
                 }
+                var endedNow = (state.unreadByTab.resolved || 0) + (state.unreadByTab.closed || 0);
+                var endedPrev = (prevByTab.resolved || 0) + (prevByTab.closed || 0);
+                if (endedNow > endedPrev && state.soundByTab.ended) {
+                    shouldPlay = true;
+                }
+                if (shouldPlay) { playNotificationSound(); }
             }
             lastUnreadGroups = state.unreadGroups;
+            lastUnreadByTab  = Object.assign({}, state.unreadByTab);
 
             render();
         }).catch(function() {

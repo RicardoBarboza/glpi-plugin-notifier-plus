@@ -1,5 +1,41 @@
 # Changelog
 
+## [1.2.0] - 2026-05-14
+
+### Adicionado
+- Aba **Demais** visível apenas para usuários com direito STEAL em tickets (bit 16384 = Admin, Super-Admin, Supervisor, Beholder)
+- Toggle "Notificar movimentações em chamados que tenho acesso" restrito aos mesmos perfis com permissão
+- Toggle para mostrar/ocultar chamados resolvidos e fechados individualmente
+- Opção de exibir resolvidos e fechados em abas separadas ou unificados como "Encerrados"
+- Ao ativar as abas de encerrados, notificações antigas são automaticamente marcadas como lidas
+- Configuração de som por fila (Novos, Meus, Equipe, Demais, Encerrados)
+- Sub-toggles de som ficam ocultos quando som principal está desligado
+- Som de Encerrados desligado por padrão
+
+### Corrigido
+- Notificações de followup, tarefa e solução agora também notificam usuários com notify_others
+- Notificações de tickets deletados/mesclados são limpas automaticamente
+- Preferência update_message_style e resolved_closed_style carregando corretamente como string
+- Contador do sino consistente com badges das abas
+- Filtro de itens visíveis respeita configuração individual de resolvidos/fechados
+
+## [1.1.0] - 2026-05-11
+
+### Adicionado
+- Notificações para chamados sem atribuição chegados por **e-mail** (coletor)
+- 5 abas de categorização: Todos, Novos, Meus, Equipe, Demais
+- Badges individuais por aba com contagem de tickets únicos
+- Abas Resolvidos e Fechados (7 abas no total)
+- Som de notificação com toggle por usuário
+- Status do chamado exibido em cada notificação com cor correspondente
+- Marcar como lido automaticamente ao abrir o chamado pelo GLPI
+- Marcar tudo como lido por aba ativa
+- Estilo de mensagem de atualização configurável
+- Mensagens específicas por tipo de alteração (categoria, prioridade, atores, descrição)
+- "Novo acompanhamento" em vez de "Novo comentário"
+- Tradução completa para Português do Brasil, English, Français, Español, Nederlands
+
+
 All notable changes to this project will be documented in this file.
 
 ## [1.0.2] - 2026-05-06
