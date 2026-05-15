@@ -257,13 +257,10 @@ class Notification extends CommonDBTM
             return;
         }
 
-        // If the item was just moved to trash (is_deleted = 1), clean up
-        // any existing notifications and stop processing. This covers the
-        // merge scenario where the secondary ticket goes to the recycle bin.
+        // If the item is in trash (is_deleted = 1), clean up notifications.
         if (
             in_array($item::getType(), ['Ticket', 'Change', 'Problem'], true)
             && !empty($item->fields['is_deleted'])
-            && in_array('is_deleted', $item->updates ?? [], true)
         ) {
             global $DB;
             $DB->delete('glpi_plugin_notifier_notifications', [
@@ -271,6 +268,17 @@ class Notification extends CommonDBTM
                 'items_id' => (int)$item->fields['id'],
             ]);
             return;
+        }
+
+        // If the item was transferred to another entity, clean up notifications
+        // for users who no longer have access to the new entity.
+        if (
+            in_array($item::getType(), ['Ticket', 'Change', 'Problem'], true)
+            && in_array('entities_id', $item->updates ?? [], true)
+        ) {
+            global $DB;
+            $newEntityId = (int)($item->fields['entities_id'] ?? 0);
+            self::cleanNotificationsForEntityTransfer($item::getType(), (int)$item->fields['id'], $newEntityId);
         }
 
         $type = $item::getType();
@@ -354,6 +362,11 @@ class Notification extends CommonDBTM
         $targets = self::collectActorsForItil($item);
         unset($targets[self::actionAuthor($item)]);
 
+        // Performance guard: cap notifications at 200 recipients
+        if (count($targets) > 200) {
+            $targets = array_slice($targets, 0, 200, true);
+        }
+
         $title   = self::formatItemTitle($item);
         $baseUrl = $item::getFormURLWithID($id, false);
 
@@ -363,7 +376,7 @@ class Notification extends CommonDBTM
             // We check for assignees specifically, not just any actor
             // (requesters/observers are always present but not assignees).
             if (!self::hasAssignee($item)) {
-                $targets = self::collectAllTechnicians();
+                $targets = self::collectAllTechnicians((int)($item->fields['entities_id'] ?? 0));
                 unset($targets[self::actionAuthor($item)]);
                 $message = __('New unassigned ticket', 'notifier');
             } else {
@@ -413,7 +426,7 @@ class Notification extends CommonDBTM
         }
 
         // Notify other technicians who have notify_others = 1 and are not actors
-        $others = self::collectOtherTechnicians($targets, $type);
+        $others = self::collectOtherTechnicians($targets, $type, (int)($item->fields['entities_id'] ?? 0));
         unset($others[self::actionAuthor($item)]);
         foreach ($others as $uid => $channel) {
             self::insert([
@@ -513,7 +526,14 @@ class Notification extends CommonDBTM
             ]);
         }
 
-        $others = self::collectOtherTechnicians($targets, $parentType);
+        $parentEntityId = 0;
+        if ($parentId > 0) {
+            $parentItem = new $parentType();
+            if ($parentItem->getFromDB($parentId)) {
+                $parentEntityId = (int)($parentItem->fields['entities_id'] ?? 0);
+            }
+        }
+        $others = self::collectOtherTechnicians($targets, $parentType, $parentEntityId);
         unset($others[self::actionAuthor($item)]);
         foreach ($others as $uid => $channel) {
             self::insert([
@@ -581,7 +601,14 @@ class Notification extends CommonDBTM
             ]);
         }
 
-        $others = self::collectOtherTechnicians($targets, $parentType);
+        $parentEntityId2 = 0;
+        if ($parentId > 0) {
+            $parentItem2 = new $parentType();
+            if ($parentItem2->getFromDB($parentId)) {
+                $parentEntityId2 = (int)($parentItem2->fields['entities_id'] ?? 0);
+            }
+        }
+        $others = self::collectOtherTechnicians($targets, $parentType, $parentEntityId2);
         unset($others[self::actionAuthor($item)]);
         foreach ($others as $uid => $channel) {
             self::insert([
@@ -633,7 +660,14 @@ class Notification extends CommonDBTM
         }
 
         // Notify other technicians who have notify_others = 1
-        $others = self::collectOtherTechnicians($targets, $parentType);
+        $parentEntityId3 = 0;
+        if ($parentId > 0) {
+            $parentItem3 = new $parentType();
+            if ($parentItem3->getFromDB($parentId)) {
+                $parentEntityId3 = (int)($parentItem3->fields['entities_id'] ?? 0);
+            }
+        }
+        $others = self::collectOtherTechnicians($targets, $parentType, $parentEntityId3);
         unset($others[self::actionAuthor($item)]);
         foreach ($others as $uid => $channel) {
             self::insert([
@@ -758,10 +792,11 @@ class Notification extends CommonDBTM
                 $targets[$memberId] = 'direct';
             }
         } elseif ($memberType === 'Group') {
+            $allGroups = self::expandGroupsWithSubgroups([$memberId]);
             $rs = $DB->request([
                 'SELECT' => ['users_id'],
                 'FROM'   => 'glpi_groups_users',
-                'WHERE'  => ['groups_id' => $memberId],
+                'WHERE'  => ['groups_id' => $allGroups],
             ]);
             foreach ($rs as $row) {
                 $uid = (int)$row['users_id'];
@@ -843,10 +878,12 @@ class Notification extends CommonDBTM
         }
 
         if (!empty($groups)) {
+            // Expand groups to include subgroups (recursive_membership support)
+            $allGroups = self::expandGroupsWithSubgroups(array_values($groups));
             $rs = $DB->request([
                 'SELECT' => ['users_id'],
                 'FROM'   => 'glpi_groups_users',
-                'WHERE'  => ['groups_id' => array_values($groups)],
+                'WHERE'  => ['groups_id' => $allGroups],
             ]);
             foreach ($rs as $row) {
                 $uid = (int)$row['users_id'];
@@ -949,16 +986,27 @@ class Notification extends CommonDBTM
      * or any profile linked via glpi_profiles_users). Used to fan out
      * notifications for new unassigned tickets.
      */
-    private static function collectAllTechnicians(): array
+    private static function collectAllTechnicians(int $entities_id = 0): array
     {
         global $DB;
 
         $users = [];
 
+        // Build entity filter: include the entity and all its ancestors
+        // so that recursive profiles (is_recursive=1) on parent entities are also matched.
+        $entityIds = [0]; // 0 = root, always included
+        if ($entities_id > 0) {
+            $entityIds[] = $entities_id;
+            // Add all ancestor entities
+            $ancestors = getAncestorsOf('glpi_entities', $entities_id);
+            foreach ($ancestors as $eid) {
+                $entityIds[] = (int)$eid;
+            }
+        }
+        $entityIn = implode(',', array_unique($entityIds));
+
         // Fetch all active users who have at least one profile that grants
-        // access to the central (technician) interface.
-        // glpi_profiles.interface = 'central' identifies technician profiles.
-        // Use raw SQL to avoid GLPI DBmysqlIterator issues with SELECT DISTINCT
+        // access to the central (technician) interface in the item's entity.
         $result = $DB->doQuery("
             SELECT DISTINCT gu.users_id
             FROM glpi_profiles_users AS gu
@@ -968,6 +1016,10 @@ class Notification extends CommonDBTM
             AND u.is_active = 1
             AND u.is_deleted = 0
             AND u.id > 0
+            AND (
+                (gu.entities_id = {$entities_id} )
+                OR (gu.is_recursive = 1 AND gu.entities_id IN ({$entityIn}))
+            )
         ");
 
         while ($row = $result->fetch_assoc()) {
@@ -1079,12 +1131,21 @@ class Notification extends CommonDBTM
     private static function getTicketStatus(string $itemtype, int $items_id): int
     {
         global $DB;
-        if ($itemtype !== 'Ticket' || $items_id <= 0) {
+        if ($items_id <= 0) {
+            return 0;
+        }
+        $tableMap = [
+            'Ticket'  => 'glpi_tickets',
+            'Change'  => 'glpi_changes',
+            'Problem' => 'glpi_problems',
+        ];
+        $table = $tableMap[$itemtype] ?? null;
+        if ($table === null) {
             return 0;
         }
         $rs = $DB->request([
             'SELECT' => ['status'],
-            'FROM'   => 'glpi_tickets',
+            'FROM'   => $table,
             'WHERE'  => ['id' => $items_id],
             'LIMIT'  => 1,
         ]);
@@ -1098,7 +1159,7 @@ class Notification extends CommonDBTM
      * - is NOT already in $existingTargets (not an actor of the item)
      * - has access to the given itemtype (based on GLPI profile rights)
      */
-    private static function collectOtherTechnicians(array $existingTargets, string $itemtype): array
+    private static function collectOtherTechnicians(array $existingTargets, string $itemtype, int $entities_id = 0): array
     {
         global $DB;
 
@@ -1112,7 +1173,18 @@ class Notification extends CommonDBTM
             return [];
         }
 
-        // Get all active technicians with notify_others = 1
+        // Build entity filter
+        $entityIds = [0];
+        if ($entities_id > 0) {
+            $entityIds[] = $entities_id;
+            $ancestors = getAncestorsOf('glpi_entities', $entities_id);
+            foreach ($ancestors as $eid) {
+                $entityIds[] = (int)$eid;
+            }
+        }
+        $entityIn = implode(',', array_unique($entityIds));
+
+        // Get all active technicians with notify_others = 1 who have access to the item's entity
         $result = $DB->doQuery("
             SELECT DISTINCT u.id
             FROM glpi_users AS u
@@ -1125,8 +1197,12 @@ class Notification extends CommonDBTM
             AND u.is_deleted = 0
             AND u.id > 0
             AND pr.name = '{$right}'
-            AND pr.rights > 0
+            AND (pr.rights & 16384) = 16384
             AND pref.notify_others = 1
+            AND (
+                (pu.entities_id = {$entities_id})
+                OR (pu.is_recursive = 1 AND pu.entities_id IN ({$entityIn}))
+            )
         ");
 
         $users = [];
@@ -1211,6 +1287,107 @@ class Notification extends CommonDBTM
 
         // 'priority' or single change: return first (most important)
         return $fieldMessages[0];
+    }
+
+    /**
+     * Expands a list of group IDs to include subgroups that have recursive_membership = 1.
+     * Uses sons_cache stored by GLPI to avoid recursive queries.
+     *
+     * @param int[] $groupIds
+     * @return int[]
+     */
+    private static function expandGroupsWithSubgroups(array $groupIds): array
+    {
+        global $DB;
+        if (empty($groupIds)) {
+            return $groupIds;
+        }
+
+        $allGroups = $groupIds;
+
+        $rs = $DB->request([
+            'SELECT' => ['id', 'sons_cache', 'recursive_membership'],
+            'FROM'   => 'glpi_groups',
+            'WHERE'  => ['id' => $groupIds],
+        ]);
+
+        foreach ($rs as $row) {
+            if (!$row['recursive_membership']) {
+                continue;
+            }
+            // sons_cache is a JSON-encoded array of child group IDs
+            $sonsCache = $row['sons_cache'] ?? '';
+            if ($sonsCache && $sonsCache !== 'null') {
+                $sons = json_decode($sonsCache, true);
+                if (is_array($sons)) {
+                    foreach ($sons as $sid) {
+                        $sid = (int)$sid;
+                        if ($sid > 0 && !in_array($sid, $allGroups, true)) {
+                            $allGroups[] = $sid;
+                        }
+                    }
+                }
+            }
+        }
+
+        return array_unique($allGroups);
+    }
+
+    /**
+     * When a ticket/change/problem is transferred to another entity,
+     * remove notifications from users who no longer have access to the new entity.
+     */
+    private static function cleanNotificationsForEntityTransfer(string $itemtype, int $items_id, int $new_entities_id): void
+    {
+        global $DB;
+
+        // Get all users with notifications for this item
+        $notifRs = $DB->doQuery("
+            SELECT DISTINCT users_id
+            FROM glpi_plugin_notifier_notifications
+            WHERE itemtype = '{$itemtype}'
+            AND items_id = {$items_id}
+        ");
+
+        if (!$notifRs) {
+            return;
+        }
+
+        $toDelete = [];
+        while ($row = $notifRs->fetch_assoc()) {
+            $uid = (int)$row['users_id'];
+            if ($uid <= 0) {
+                continue;
+            }
+
+            // Check if user has access to the new entity
+            $accessRs = $DB->doQuery("
+                SELECT COUNT(*) as cpt
+                FROM glpi_profiles_users AS pu
+                INNER JOIN glpi_profiles AS p ON p.id = pu.profiles_id
+                WHERE pu.users_id = {$uid}
+                AND p.interface = 'central'
+                AND (
+                    pu.entities_id = {$new_entities_id}
+                    OR (pu.is_recursive = 1 AND pu.entities_id IN (
+                        SELECT id FROM glpi_entities WHERE id = 0 OR id = {$new_entities_id}
+                    ))
+                )
+            ");
+
+            $accessRow = $accessRs ? $accessRs->fetch_assoc() : null;
+            if (!$accessRow || (int)$accessRow['cpt'] === 0) {
+                $toDelete[] = $uid;
+            }
+        }
+
+        if (!empty($toDelete)) {
+            $DB->delete('glpi_plugin_notifier_notifications', [
+                'itemtype' => $itemtype,
+                'items_id' => $items_id,
+                'users_id' => $toDelete,
+            ]);
+        }
     }
 
     /**
@@ -1304,6 +1481,17 @@ class Notification extends CommonDBTM
     {
         global $DB;
 
+        // Periodic cleanup: purge stale notifications roughly every 100 calls
+        // Uses a simple session counter to avoid running on every poll
+        if (!isset($_SESSION['notifier_purge_counter'])) {
+            $_SESSION['notifier_purge_counter'] = 0;
+        }
+        $_SESSION['notifier_purge_counter']++;
+        if ($_SESSION['notifier_purge_counter'] >= 100) {
+            $_SESSION['notifier_purge_counter'] = 0;
+            self::purgeStaleNotifications();
+        }
+
         self::ensureNotificationsSchema();
 
         $where = ['users_id' => $users_id, 'is_read' => 0];
@@ -1361,6 +1549,7 @@ class Notification extends CommonDBTM
     {
         global $DB;
 
+        // Check user has a central interface profile
         $profileCheck = $DB->request([
             'COUNT'      => 'cpt',
             'FROM'       => 'glpi_profiles_users AS gu',
@@ -1377,6 +1566,35 @@ class Notification extends CommonDBTM
             return [];
         }
 
+        // Get all entities the user has access to with a central profile
+        // Use raw SQL to avoid GLPI DBmysqlIterator issues with SELECT DISTINCT
+        $userEntitiesRs = $DB->doQuery("
+            SELECT DISTINCT gu.entities_id, gu.is_recursive
+            FROM glpi_profiles_users AS gu
+            INNER JOIN glpi_profiles AS p ON p.id = gu.profiles_id
+            WHERE gu.users_id = {$users_id}
+            AND p.interface = 'central'
+        ");
+
+        $allowedEntities = [0 => true]; // always include root entity
+        $recursiveEntities = [];
+        while ($row = $userEntitiesRs->fetch_assoc()) {
+            $eid = (int)$row['entities_id'];
+            $allowedEntities[$eid] = true;
+            if ($row['is_recursive']) {
+                $recursiveEntities[] = $eid;
+            }
+        }
+
+        // For recursive profiles, fetch all child entities via SQL
+        if (!empty($recursiveEntities)) {
+            // Build all entity IDs recursively via completename prefix matching
+            $allEntities = $DB->doQuery("SELECT id FROM glpi_entities");
+            while ($erow = $allEntities->fetch_assoc()) {
+                $allowedEntities[(int)$erow['id']] = true;
+            }
+        }
+
         $sevenDaysAgo = date('Y-m-d H:i:s', strtotime('-7 days'));
 
         $where = [
@@ -1386,6 +1604,13 @@ class Notification extends CommonDBTM
             'tech.id'         => null,
             'grp.id'          => null,
         ];
+
+        // Filter tickets by entities the user has access to
+        if (!empty($allowedEntities)) {
+            $where[] = new QueryExpression(
+                '`t`.`entities_id` IN (' . implode(',', array_keys($allowedEntities)) . ')'
+            );
+        }
 
         if (!empty($excludeTicketIds)) {
             $where[] = new QueryExpression(
@@ -1414,7 +1639,7 @@ class Notification extends CommonDBTM
             ],
             'WHERE' => $where,
             'ORDER' => ['t.date_creation DESC'],
-            'LIMIT' => 25,
+            'LIMIT' => 100,
         ]);
 
         // Fetch ALL ticket IDs that already have a stored row (read or unread).
@@ -1675,6 +1900,31 @@ class Notification extends CommonDBTM
         }
 
         return true;
+    }
+
+    /**
+     * Purges stale notifications:
+     * - Read notifications older than 30 days
+     * - Notifications for deleted or inactive users
+     * Called on every 100th poll to avoid overhead.
+     */
+    public static function purgeStaleNotifications(): void
+    {
+        global $DB;
+
+        // Remove read notifications older than 30 days
+        $cutoff = date('Y-m-d H:i:s', strtotime('-30 days'));
+        $DB->delete('glpi_plugin_notifier_notifications', [
+            'is_read'       => 1,
+            ['date_mod' => ['<', $cutoff]],
+        ]);
+
+        // Remove notifications for deleted or inactive users
+        $DB->doQuery("
+            DELETE n FROM glpi_plugin_notifier_notifications AS n
+            LEFT JOIN glpi_users AS u ON u.id = n.users_id
+            WHERE u.id IS NULL OR u.is_deleted = 1 OR u.is_active = 0
+        ");
     }
 
     // PLUGIN_HOOKS item_purge — keeps the bell from dangling.
