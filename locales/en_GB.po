@@ -195,3 +195,15 @@ msgstr "Unified (Ended)"
 
 msgid "Som por fila"
 msgstr "Sound per queue"
+
+msgid "Ticket transferred to your entity"
+msgstr "Ticket transferred to your entity"
+
+msgid "Validation requested"
+msgstr "Validation requested"
+
+msgid "Validation accepted"
+msgstr "Validation accepted"
+
+msgid "Validation refused"
+msgstr "Validation refused"

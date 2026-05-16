@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.1] - 2026-05-16
+
+### Corrigido
+- Filtro de entidade não aplicado em `countUnread()` e `countUnreadGroups()` — badge do sino exibia contagem de notificações de todas as entidades, ignorando o acesso do usuário
+- `handleItilGroupLink()` notificava usuários inativos/deletados ao atribuir um grupo a um ticket
+- `handleProjectTaskTeamLink()` notificava usuários inativos/deletados em tarefas de projeto
+- `cleanNotificationsForEntityTransfer()` não considerava entidades ancestrais ao verificar acesso após transferência de chamado
+- Ticket mergeado permanecia no sino — notificações de tickets deletados/mergeados são filtradas e limpas automaticamente no próximo poll
+- Queries redundantes em `handleFollowup`, `handleItilTask` e `handleSolution` (objeto parent carregado duas vezes)
+
 ## [1.3.0] - 2026-05-15
 
 ### Adicionado
@@ -15,15 +25,10 @@
 - Proteção de performance: máximo de 200 destinatários por notificação
 
 ### Corrigido
+- Tickets mesclados/deletados via merge do GLPI agora são limpos automaticamente do sino
 - Erro SELECT DISTINCT no DBmysqlIterator ao buscar entidades do usuário
 - Tickets na entidade raiz (id=0) não apareciam na aba Novos
 - Técnico com perfil Self-Service em uma entidade não recebe notificações de chamados dessa entidade
-
-## [1.2.1] - 2026-05-15
-
-### Corrigido
-- Tickets mesclados/deletados via merge do GLPI agora são limpos automaticamente do sino
-- Removida dependência do array $item->updates para detectar is_deleted
 
 ## [1.2.0] - 2026-05-14
 
@@ -62,33 +67,20 @@
 
 ## [1.0.2] - 2026-05-06
 
-### Changed
-- **Unread tab is now the default**: opening the bell panel lands on the Unread tab so the first thing the user sees is "what still needs my attention". The All tab is right next to it; the user's choice still persists per-browser via `localStorage`, so anyone who explicitly switches to All will keep landing on All
-- **Stronger unread visual treatment**: unread rows now carry a soft primary-color background tint plus a bolder title alongside the existing left border, so they read as "needs attention" at a glance rather than as a thin colored stripe
-- **Notifications are batched per source object**: every Ticket / Change / Problem / ProjectTask now renders as a single row showing its most recent event, with a chevron and a "{n} updates" count when there are more. Expanding the chevron reveals the full sub-event list (status changes, comments, tasks, ...) for that object. Clicking the row body navigates to the item and marks every unread sub-event as read in one go; a per-group toggle marks the whole batch read or flips it back to unread
-- **Bell badge counts source items, not raw events**: the unread badge on the bell and the `(N)` counter in the panel header now show the number of unique source items (tickets/changes/problems/projecttasks) with at least one unread event, matching what the user sees in the batched list. Backed by a new `Notification::countUnreadGroups()` helper that does a `COUNT(DISTINCT itemtype, items_id)` over the unread rows
+### Alterado
+- Aba não lida como padrão ao abrir o painel
+- Tratamento visual mais forte para notificações não lidas
+- Notificações agrupadas por item de origem com contador de atualizações
+- Badge do sino conta itens únicos, não eventos individuais
 
-### Fixed
-- **GLPI 11 asset path drift**: `setup.php` serves `public/notifier.{js,css}` on GLPI 11 layouts but those files had drifted from the `js/`/`css/` source since v1.0.0. The build now ships matching copies in both locations, so all the bell UX changes actually reach the browser on GLPI 11 installs
+### Corrigido
+- Drift de arquivos entre js/ e public/ no GLPI 11
 
 ## [1.0.1] - 2026-04-29
 
-### Fixed
-- **GLPI 11 compatibility**: every `ajax/*.php` endpoint now guards its bootstrap include with `defined('GLPI_ROOT')`. GLPI 11 routes legacy plugin endpoints through `LegacyFileLoadController`, which has already booted the kernel and defined `GLPI_ROOT`; re-running `/inc/includes.php` emitted a "constant already defined" warning that ended up in the response body and broke the bell's JSON parsing. GLPI 10 still hits these files directly and is unaffected — the include runs as before
+### Corrigido
+- Compatibilidade com GLPI 11: endpoints ajax protegidos contra redefinição de GLPI_ROOT
 
 ## [1.0.0] - 2026-04-14
 
-Initial release.
-
-### Added
-- **Central header bell**: a new bell button is injected next to the user avatar in GLPI's top header, with an unread badge, a gentle pulse animation on first load, and a dropdown panel listing the latest notifications. Only loaded for the central (technician) interface; self-service users are not affected
-- **Complete ITIL event coverage**: Notifier listens to `item_add` / `item_update` on every ITIL object and turns them into bell rows (Ticket, Change, Problem, ProjectTask, followups, tasks, solutions, assignments)
-- **Smart target resolution**: resolves every user that should hear about an event and always filters out the acting user so nobody gets a bell for their own action
-- **Notification preferences modal**: per-type, per-channel preferences (direct / group) for each ITIL type, defaults to all on
-- **Rich panel layout**: animated pop-in, event-specific icons, colored left border for unread rows, illustrated empty state
-- **Per-row mark read / mark unread**, **mark all as read**, **one-click redirect + auto mark-read**
-- **Floating bell with minimize**: fixed bottom-right, persists state via localStorage
-- **Automatic cleanup**: item_purge hook removes notification rows when source items are deleted
-- **30-second polling** while a page is open
-- **Multi-language support**: Português do Brasil, English, Français, Español, Nederlands
-- **CSRF-safe AJAX** via csrftoken.php endpoint
+Versão inicial.

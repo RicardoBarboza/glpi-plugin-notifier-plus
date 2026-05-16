@@ -48,6 +48,9 @@ msgstr "Novo item relacionado a você"
 msgid "New unassigned ticket"
 msgstr "Novo chamado sem atribuição"
 
+msgid "Ticket transferred to your entity"
+msgstr "Chamado transferido para sua entidade"
+
 msgid "Status changed"
 msgstr "Status alterado"
 
@@ -199,3 +202,12 @@ msgstr "Unificados (Encerrados)"
 
 msgid "Som por fila"
 msgstr "Som por fila"
+
+msgid "Validation requested"
+msgstr "Validação solicitada"
+
+msgid "Validation accepted"
+msgstr "Validação aprovada"
+
+msgid "Validation refused"
+msgstr "Validação recusada"

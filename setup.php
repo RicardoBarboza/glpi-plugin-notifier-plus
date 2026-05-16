@@ -44,7 +44,7 @@
 
 use Glpi\Plugin\Hooks;
 
-define('PLUGIN_NOTIFIER_VERSION', '1.3.0');
+define('PLUGIN_NOTIFIER_VERSION', '1.3.1');
 define('PLUGIN_NOTIFIER_MIN_GLPI', '10.0.0');
 define('PLUGIN_NOTIFIER_MAX_GLPI', '11.99.99');
 
@@ -119,6 +119,29 @@ function plugin_init_notifier(): void
         'Change_Group',
         'Group_Problem',
         'ProjectTaskTeam',
+        'TicketValidation',
+        'ChangeValidation',
+    ];
+
+    $cleanup_types = [
+        'Ticket',
+        'Change',
+        'Problem',
+        'ProjectTask',
+        'ITILFollowup',
+        'TicketTask',
+        'ChangeTask',
+        'ProblemTask',
+        'ITILSolution',
+        'Ticket_User',
+        'Change_User',
+        'Problem_User',
+        'Group_Ticket',
+        'Change_Group',
+        'Group_Problem',
+        'ProjectTaskTeam',
+        'TicketValidation',
+        'ChangeValidation',
     ];
 
     $dispatch = ['GlpiPlugin\\Notifier\\Notification', 'handleItemEvent'];
@@ -129,7 +152,7 @@ function plugin_init_notifier(): void
     }
 
     $cleanup = ['GlpiPlugin\\Notifier\\Notification', 'cleanForItem'];
-    foreach ($watched_types as $type) {
+    foreach ($cleanup_types as $type) {
         $PLUGIN_HOOKS[Hooks::ITEM_PURGE]['notifier'][$type] = $cleanup;
     }
 }

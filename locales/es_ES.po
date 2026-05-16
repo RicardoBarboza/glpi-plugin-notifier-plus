@@ -195,3 +195,15 @@ msgstr "Unificados (Cerrados)"
 
 msgid "Som por fila"
 msgstr "Sonido por cola"
+
+msgid "Ticket transferred to your entity"
+msgstr "Ticket transferido a su entidad"
+
+msgid "Validation requested"
+msgstr "Validación solicitada"
+
+msgid "Validation accepted"
+msgstr "Validación aceptada"
+
+msgid "Validation refused"
+msgstr "Validación rechazada"

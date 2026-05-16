@@ -195,3 +195,15 @@ msgstr "Unifiés (Terminés)"
 
 msgid "Som por fila"
 msgstr "Son par file"
+
+msgid "Ticket transferred to your entity"
+msgstr "Ticket transféré vers votre entité"
+
+msgid "Validation requested"
+msgstr "Validation demandée"
+
+msgid "Validation accepted"
+msgstr "Validation acceptée"
+
+msgid "Validation refused"
+msgstr "Validation refusée"

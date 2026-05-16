@@ -195,3 +195,15 @@ msgstr "Samengevoegd (Afgesloten)"
 
 msgid "Som por fila"
 msgstr "Geluid per wachtrij"
+
+msgid "Ticket transferred to your entity"
+msgstr "Ticket overgedragen naar uw entiteit"
+
+msgid "Validation requested"
+msgstr "Validatie aangevraagd"
+
+msgid "Validation accepted"
+msgstr "Validatie geaccepteerd"
+
+msgid "Validation refused"
+msgstr "Validatie geweigerd"
