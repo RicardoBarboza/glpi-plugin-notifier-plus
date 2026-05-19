@@ -1102,30 +1102,24 @@
         var ticketId = parseInt(match[1], 10);
         if (!ticketId) { return; }
 
-        // Wait for the first poll to populate state, then mark.
-        // We retry a few times in case the poll hasn't fired yet.
+        // Mark all stored notifications for this ticket immediately (covers all categories)
+        // This runs right away without waiting for state.items to be populated
+        fetchJson(BASE_URL + '/ajax/markread.php?ticket_id=' + ticketId)
+            .catch(function() {});
+
+        // Also try reactive mark (covers unassigned tickets)
+        fetchJson(BASE_URL + '/ajax/markreadreactive.php?tickets_id=' + ticketId)
+            .catch(function() {});
+
+        // Additionally update local state if poll has already run
         var attempts = 0;
         function tryMark() {
             attempts++;
-            var found = false;
-
-            // Check stored notifications for this ticket
             state.items.forEach(function(item) {
-                if (item.itemtype === 'Ticket' && item.items_id === ticketId && !item.is_read) {
-                    found = true;
-                    if (item.id > 0) {
-                        fireMarkRead(item.id);
-                    } else {
-                        fireMarkRead(-ticketId); // reactive
-                    }
+                if (item.itemtype === 'Ticket' && parseInt(item.items_id, 10) === ticketId && !item.is_read) {
+                    item.is_read = true; // optimistic local update
                 }
             });
-
-            // Also try reactive mark regardless (cheap, idempotent)
-            if (!found) {
-                fetchJson(BASE_URL + '/ajax/markreadreactive.php?tickets_id=' + ticketId)
-                    .catch(function() {});
-            }
         }
 
         // Try immediately and after first poll

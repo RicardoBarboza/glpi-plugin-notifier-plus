@@ -300,7 +300,7 @@ $show_closed    = (bool)($prefs['show_closed'] ?? 1);
             eventCell += ' <span style="font-size:10px;background:rgba(255,255,255,.15);color:#b0bec5;padding:1px 5px;border-radius:3px;margin-left:4px;">' + count + 'x</span>';
         }
 
-        var row = '<tr class="' + rowCls + '" style="' + rowStyle + (isSub ? 'padding-left:20px;opacity:0.85;' : '') + '" data-id="' + item.id + '" data-read="' + (item.is_read ? 1 : 0) + '">';
+        var row = '<tr class="' + rowCls + '" style="' + rowStyle + (isSub ? 'padding-left:20px;opacity:0.85;' : '') + '" data-id="' + item.id + '" data-read="' + (item.is_read ? 1 : 0) + '" data-items-id="' + item.items_id + '">';
         row += '<td class="fw-500">' + (isSub ? '&nbsp;&nbsp;&nbsp;↳ ' : '') + esc(item.title) + '</td>';
         row += '<td class="text-muted">' + (item.items_id ? '#'+item.items_id : '') + '</td>';
         row += '<td><div class="notifier-date-line1">' + dt.date + '</div><div class="notifier-date-line2">' + dt.time + '</div></td>';
@@ -436,10 +436,17 @@ $show_closed    = (bool)($prefs['show_closed'] ?? 1);
             var endpoint = isRead
                 ? notifierBase + '/ajax/markunread.php'
                 : notifierBase + '/ajax/markread.php';
+            // Pass ticket_id to mark ALL notifications of this ticket at once
+            var ticketId = row.dataset.itemsId || '';
+            var body = 'id=' + id + '&_glpi_csrf_token=' + token;
+            if (!isRead && ticketId) {
+                body += '&ticket_id=' + ticketId;
+            }
             fetch(endpoint, {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'id=' + id + '&_glpi_csrf_token=' + token
+                body: body
             }).then(function() { load(); });
         });
     }
