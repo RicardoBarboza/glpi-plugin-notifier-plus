@@ -1,73 +1,132 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <root>
-    <name>Notifier - In-app notifications</name>
+    <name>Notifier+</name>
     <key>notifier</key>
     <state>stable</state>
+    <logo>https://filedn.com/l4vseLIK5pmR0d6WUnyhNau/notifier_plus_logo.png</logo>
     <description>
         <short>
-            <en><![CDATA[In-app notification bell for GLPI technicians — every action that touches you (ticket, change, problem, project task) appears in a bell dropdown next to your avatar]]></en>
-            <nl><![CDATA[In-app notificatiebel voor GLPI technici — elke actie die jou raakt (ticket, wijziging, probleem, projecttaak) verschijnt in een dropdown naast je avatar]]></nl>
-            <fr><![CDATA[Cloche de notifications in-app pour les techniciens GLPI — chaque action qui vous concerne (ticket, changement, probleme, tache de projet) apparait dans un menu deroulant a cote de votre avatar]]></fr>
-            <es><![CDATA[Campana de notificaciones in-app para tecnicos GLPI — cada accion que te afecta (ticket, cambio, problema, tarea de proyecto) aparece en un menu desplegable junto a tu avatar]]></es>
+            <en>Real-time notification bell for GLPI technicians — tickets, changes, problems, validations and more, with full notifications page and sound alerts.</en>
+            <pt_BR>Sino de notificações em tempo real para técnicos GLPI — chamados, mudanças, problemas, validações e mais, com página completa de notificações e alertas sonoros.</pt_BR>
+            <fr>Cloche de notifications en temps réel pour les techniciens GLPI — tickets, changements, problèmes, validations et plus, avec page complète de notifications et alertes sonores.</fr>
+            <es>Campana de notificaciones en tiempo real para técnicos GLPI — tickets, cambios, problemas, validaciones y más, con página completa de notificaciones y alertas de sonido.</es>
+            <nl>Realtime notificatiebel voor GLPI technici — tickets, wijzigingen, problemen, validaties en meer, met volledige meldingenpagina en geluidsalarmen.</nl>
         </short>
         <long>
-            <en><![CDATA[Notifier adds a real-time notification bell to GLPI's top header, right next to the user avatar.
+            <en>
+## Notifier+
 
-Features:
-- Central header bell with unread badge and dropdown panel
-- Fires on every action that affects you as a technician:
-  - Ticket / Change / Problem created, assigned, commented, status changed, solution proposed
-  - New ITIL task or followup on an item where you are actor
-  - Project task created, updated, or team-assigned
-  - Group assignments fan out to every member
-- One-click redirect to the source item and automatic mark-as-read
-- "Mark all as read" action in the dropdown header
-- Automatic cleanup: notifications pointing at purged items are deleted
-- 30 second polling, dedup window to prevent bell spam
-- Central interface only — self-service is not touched
-- Full GLPI rights integration (READ / UPDATE / PURGE per profile)
-- Multi-language support: English, Dutch, French, Spanish]]></en>
+Notifier+ keeps GLPI technicians informed in real time about everything happening with tickets, changes, problems and project tasks — without refreshing the page or checking email.
+
+### Bell icon
+A bell icon appears in the bottom-right corner of every GLPI page. When something important happens, the bell pulses, the counter increases and a **sound alert** plays automatically.
+
+### 7 notification queues
+| Queue | What it shows |
+|-------|---------------|
+| All | Everything unread |
+| New | Unassigned tickets (including email/collector) |
+| Mine | Tickets assigned directly to me |
+| Team | Tickets assigned to my group |
+| Others | Activity on tickets I have access to (admins/supervisors) |
+| Resolved | Resolved tickets pending review |
+| Closed | Closed tickets pending review |
+
+### Full notifications page
+Click **"View all"** in the bell to open a dedicated page with:
+- 12 columns: Ticket, №, Date/Time, Status, Priority, Entity, Requester, Type, User, Event, Detail, Actions
+- Filter by current ticket status and period
+- Grouping by ticket respecting the configured style (Priority / Combined / Multiple)
+- **Assume** button for unassigned tickets — assigns the technician without opening the ticket
+- Auto-refresh every 30 seconds
+
+### Event coverage
+- New unassigned tickets (including **email/collector**)
+- Direct and group assignments (including nested subgroups)
+- Followups, tasks, solutions, status changes
+- **Solution refused** — technician notified when requester refuses
+- **Validations** — notifies approver on request, actors on response
+- **Entity transfer** — notifies technicians of destination entity
+- Private followups notify only technician assignees, never the requester
+
+### Entity filtering
+Technicians only receive notifications for tickets in entities they have access to. Recursive profiles automatically expand to child entities.
+
+### Smart cleanup
+- Merged/deleted tickets removed automatically from the bell
+- When an actor is removed from a ticket, stops receiving notifications
+- When a group is unassigned, members stop receiving notifications
+- Inactive/deleted user notifications purged periodically
+
+### Per-user preferences
+- Notification types per item type and channel
+- Sound per queue
+- Message style: Priority / Combined / Multiple updates
+- Show/hide resolved and closed tickets
+- "Others" queue toggle (requires STEAL right)
+
+### Languages
+Português do Brasil, English, Français, Español, Nederlands
+            </en>
         </long>
     </description>
-    <homepage>https://github.com/dvbnl/glpi-plugin-notifier</homepage>
-    <download>https://github.com/dvbnl/glpi-plugin-notifier/releases</download>
-    <issues>https://github.com/dvbnl/glpi-plugin-notifier/issues</issues>
-    <readme>https://raw.githubusercontent.com/dvbnl/glpi-plugin-notifier/main/README.md</readme>
+    <homepage>https://github.com/RicardoBarboza/glpi-plugin-notifier-plus</homepage>
+    <download>https://github.com/RicardoBarboza/glpi-plugin-notifier-plus/releases</download>
+    <issues>https://github.com/RicardoBarboza/glpi-plugin-notifier-plus/issues</issues>
+    <readme>https://raw.githubusercontent.com/RicardoBarboza/glpi-plugin-notifier-plus/main/README.md</readme>
+    <changelog>https://raw.githubusercontent.com/RicardoBarboza/glpi-plugin-notifier-plus/main/CHANGELOG.md</changelog>
     <authors>
-        <author>DVBNL</author>
+        <author>Ricardo Barboza (Omium Tecnologias)</author>
     </authors>
     <versions>
         <version>
-            <num>1.0.2</num>
-            <compatibility>~10.0,~11.0</compatibility>
-            <download_url>https://github.com/dvbnl/glpi-plugin-notifier/releases/download/v1.0.2/notifier-v1.0.2.zip</download_url>
+            <num>1.4.0</num>
+            <compatibility>~11.0</compatibility>
+            <download_url>https://github.com/RicardoBarboza/glpi-plugin-notifier-plus/releases/download/v1.4.0/notifier_omium-v1.4.0.zip</download_url>
         </version>
         <version>
-            <num>1.0.1</num>
-            <compatibility>~10.0,~11.0</compatibility>
-            <download_url>https://github.com/dvbnl/glpi-plugin-notifier/releases/download/v1.0.1/notifier-v1.0.1.zip</download_url>
+            <num>1.3.1</num>
+            <compatibility>~11.0</compatibility>
+            <download_url>https://github.com/RicardoBarboza/glpi-plugin-notifier-plus/releases/download/v1.3.1/notifier_omium-v1.3.1.zip</download_url>
         </version>
         <version>
-            <num>1.0.0</num>
-            <compatibility>~10.0</compatibility>
-            <download_url>https://github.com/dvbnl/glpi-plugin-notifier/releases/download/v1.0.0/notifier-v1.0.0.zip</download_url>
+            <num>1.2.0</num>
+            <compatibility>~11.0</compatibility>
+            <download_url>https://github.com/RicardoBarboza/glpi-plugin-notifier-plus/releases/download/v1.2.0/notifier_omium-v1.2.0.zip</download_url>
         </version>
     </versions>
     <langs>
+        <lang>pt_BR</lang>
         <lang>en_GB</lang>
-        <lang>nl_NL</lang>
         <lang>fr_FR</lang>
         <lang>es_ES</lang>
+        <lang>nl_NL</lang>
     </langs>
-    <license><![CDATA[GPL v3+]]></license>
+    <license>GPL v3+</license>
     <tags>
         <en>
             <tag>notifications</tag>
             <tag>bell</tag>
             <tag>alerts</tag>
-            <tag>technician</tag>
             <tag>realtime</tag>
+            <tag>technician</tag>
             <tag>helpdesk</tag>
+            <tag>sound</tag>
+            <tag>validation</tag>
+            <tag>tickets</tag>
         </en>
+        <pt_BR>
+            <tag>notificações</tag>
+            <tag>sino</tag>
+            <tag>alertas</tag>
+            <tag>tempo real</tag>
+            <tag>técnico</tag>
+            <tag>helpdesk</tag>
+        </pt_BR>
     </tags>
+    <screenshots>
+        <screenshot>https://filedn.com/l4vseLIK5pmR0d6WUnyhNau/notifier_bell.png</screenshot>
+        <screenshot>https://filedn.com/l4vseLIK5pmR0d6WUnyhNau/notifier_expanded.png</screenshot>
+        <screenshot>https://filedn.com/l4vseLIK5pmR0d6WUnyhNau/notifier.png</screenshot>
+        <screenshot>https://filedn.com/l4vseLIK5pmR0d6WUnyhNau/notifier_conf.png</screenshot>
+    </screenshots>
 </root>
