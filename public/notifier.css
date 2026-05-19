@@ -198,15 +198,38 @@
     height: 70vh;
     max-height: 70vh;
     min-height: 500px;
-    background: #2c3440;
-    border: 1px solid rgba(255,255,255,.12);
+    background: #2c3440 !important;
+    border: 1px solid rgba(255,255,255,.12) !important;
     border-radius: 14px;
     box-shadow: 0 18px 48px rgba(0, 0, 0, .22);
-    z-index: 10000;
+    z-index: 10050;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     animation: notifier-pop-in .15s ease-out;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    color: #ffffff !important;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+}
+
+/* Reset children from Bootstrap/GLPI global styles */
+.notifier-bell-panel * {
+    box-sizing: border-box;
+}
+.notifier-bell-panel a {
+    color: inherit !important;
+    text-decoration: none !important;
+}
+.notifier-bell-panel p,
+.notifier-bell-panel ul,
+.notifier-bell-panel li {
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
 }
 
 @keyframes notifier-pop-in {
@@ -219,7 +242,7 @@
 }
 
 .notifier-bell-panel-header {
-    background: #2c3440;
+    background: #2c3440 !important;
     border-bottom: 1px solid rgba(255,255,255,.12);
 }
 
@@ -233,11 +256,11 @@
 .notifier-bell-panel-title {
     font-weight: 700;
     font-size: 16px;
-    color: #ffffff;
+    color: #ffffff !important;
 }
 
 .notifier-bell-panel-count {
-    color: #b0bec5;
+    color: #b0bec5 !important;
     font-weight: 500;
     font-size: 14px;
     margin-left: 2px;
@@ -346,12 +369,13 @@
 }
 
 .notifier-bell-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
     overflow-y: auto;
     flex: 1;
     min-height: 300px;
+    background: #2c3440 !important;
 }
 
 .notifier-bell-item {
@@ -361,7 +385,8 @@
     border-bottom: 1px solid rgba(255,255,255,.12);
     cursor: pointer;
     transition: background-color .12s ease;
-    background: #2c3440;
+    background: #2c3440 !important;
+    color: #ffffff !important;
 }
 
 .notifier-bell-item:last-child {
@@ -369,26 +394,26 @@
 }
 
 .notifier-bell-item:hover {
-    background: rgba(255,255,255,.08);
+    background: rgba(255,255,255,.08) !important;
 }
 
 .notifier-bell-item.is-unread {
-    background: rgba(50,78,134,.2);
+    background: rgba(50,78,134,.2) !important;
     border-left: 3px solid #f5a623;
     padding-left: 13px;
 }
 
 .notifier-bell-item.is-unread .notifier-bell-item-title {
     font-weight: 700;
-    color: #ffffff;
+    color: #ffffff !important;
 }
 
 .notifier-bell-item.is-unread .notifier-bell-item-msg {
-    color: #ffffff;
+    color: #ffffff !important;
 }
 
 .notifier-bell-item.is-unread:hover {
-    background: rgba(50,78,134,.25);
+    background: rgba(50,78,134,.25) !important;
 }
 
 .notifier-bell-item-icon {
@@ -671,10 +696,36 @@
 .notifier-bell-panel-footer {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 10px 14px;
     border-top: 1px solid rgba(255,255,255,.12);
     background: #2c3440;
+}
+
+.notifier-bell-viewall {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 8px;
+    color: #a0aab4;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 7px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: border-color .12s ease, color .12s ease;
+}
+
+.notifier-bell-viewall i {
+    color: #a0aab4;
+}
+
+.notifier-bell-viewall:hover,
+.notifier-bell-viewall:focus-visible {
+    border-color: #f5a623;
+    color: #ffffff;
+    outline: 0;
 }
 
 .notifier-bell-settings {

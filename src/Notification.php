@@ -44,6 +44,7 @@ class Notification extends CommonDBTM
     const EVENT_UPDATED           = 'updated';
     const EVENT_VALIDATION_ASKED  = 'validation_asked';
     const EVENT_VALIDATION_DONE   = 'validation_done';
+    const EVENT_SOLUTION_REFUSED  = 'solution_refused';
 
     public static function getTypeName($nb = 0): string
     {
@@ -413,6 +414,31 @@ class Notification extends CommonDBTM
         }
 
         if (in_array('status', $relevant, true)) {
+            // Suppress STATUS_CHANGED when it was triggered by a solution refusal.
+            // In that case handleSolution already fired EVENT_SOLUTION_REFUSED,
+            // so sending another EVENT_STATUS_CHANGED would be a duplicate.
+            // The solution refusal sets status back to 1 (incoming/new).
+            $newStatus = (int)($item->fields['status'] ?? 0);
+            $prevStatus = null;
+            if (isset($item->oldvalues['status'])) {
+                $prevStatus = (int)$item->oldvalues['status'];
+            }
+            // Status 1=new after being resolved/in-progress = likely a solution refusal
+            // Check if there's a recently refused solution for this item
+            global $DB;
+            $refusedSolution = $DB->request([
+                'COUNT' => 'cpt',
+                'FROM'  => 'glpi_itilsolutions',
+                'WHERE' => [
+                    'itemtype' => $type,
+                    'items_id' => $id,
+                    'status'   => 4, // refused
+                    new QueryExpression('`date_approval` > DATE_SUB(NOW(), INTERVAL 5 SECOND)'),
+                ],
+            ])->current();
+            if ((int)($refusedSolution['cpt'] ?? 0) > 0) {
+                return; // Already handled by handleSolution as EVENT_SOLUTION_REFUSED
+            }
             $event   = self::EVENT_STATUS_CHANGED;
             $message = __('Status changed', 'notifier');
         } elseif (!empty($relevant)) {
@@ -514,10 +540,17 @@ class Notification extends CommonDBTM
             return;
         }
 
-        $targets = self::collectActorsForItil($parent);
-        unset($targets[self::actionAuthor($item)]);
-        if (empty($targets)) {
-            return;
+        $isPrivate = (bool)($item->fields['is_private'] ?? false);
+        $actor     = self::actionAuthor($item);
+
+        // For private followups: notify only assignees (type=2), never requesters
+        // For public followups: notify all actors
+        $actorsWithType = self::collectActorsForItilWithType($parent);
+        $targets = [];
+        foreach ($actorsWithType as $uid => $data) {
+            if ($uid === $actor) continue;
+            if ($isPrivate && $data['actor_type'] !== 2) continue; // skip non-assignees for private
+            $targets[$uid] = $data['channel'];
         }
 
         $title   = self::formatItemTitle($parent);
@@ -536,20 +569,23 @@ class Notification extends CommonDBTM
             ]);
         }
 
-        $parentEntityId = (int)($parent->fields['entities_id'] ?? 0);
-        $others = self::collectOtherTechnicians($targets, $parentType, $parentEntityId);
-        unset($others[self::actionAuthor($item)]);
-        foreach ($others as $uid => $channel) {
-            self::insert([
-                'users_id' => $uid,
-                'itemtype' => $parentType,
-                'items_id' => $parentId,
-                'event'    => self::EVENT_COMMENTED,
-                'channel'  => $channel,
-                'title'    => $title,
-                'message'  => __('New followup', 'notifier'),
-                'url'      => $baseUrl,
-            ]);
+        // notify_others: only for public followups
+        if (!$isPrivate) {
+            $parentEntityId = (int)($parent->fields['entities_id'] ?? 0);
+            $others = self::collectOtherTechnicians($targets, $parentType, $parentEntityId);
+            unset($others[$actor]);
+            foreach ($others as $uid => $channel) {
+                self::insert([
+                    'users_id' => $uid,
+                    'itemtype' => $parentType,
+                    'items_id' => $parentId,
+                    'event'    => self::EVENT_COMMENTED,
+                    'channel'  => $channel,
+                    'title'    => $title,
+                    'message'  => __('New followup', 'notifier'),
+                    'url'      => $baseUrl,
+                ]);
+            }
         }
     }
 
@@ -635,14 +671,46 @@ class Notification extends CommonDBTM
             return;
         }
 
-        $targets = self::collectActorsForItil($parent);
-        unset($targets[self::actionAuthor($item)]);
-        if (empty($targets)) {
+        $isCreate  = empty($item->updates ?? []);
+        $status    = (int)($item->fields['status'] ?? 1);
+        $title     = self::formatItemTitle($parent);
+        $baseUrl   = $parentType::getFormURLWithID($parentId, false);
+        $actor     = self::actionAuthor($item);
+
+        // ITEM_UPDATE: solution was refused (status=4) — notify assignees
+        // status: 1=waiting, 2=accepted, 3=approved, 4=refused
+        if (!$isCreate && in_array('status', $item->updates ?? [], true) && $status === 4) {
+            $targets = self::collectActorsForItil($parent);
+            // Only notify assignees (type=2), not requesters
+            $assignees = array_filter($targets, function($channel) {
+                return $channel === 'direct';
+            });
+            unset($assignees[$actor]);
+            foreach ($assignees as $uid => $channel) {
+                self::insert([
+                    'users_id' => $uid,
+                    'itemtype' => $parentType,
+                    'items_id' => $parentId,
+                    'event'    => self::EVENT_SOLUTION_REFUSED,
+                    'channel'  => $channel,
+                    'title'    => $title,
+                    'message'  => __('Solution refused', 'notifier'),
+                    'url'      => $baseUrl,
+                ]);
+            }
             return;
         }
 
-        $title   = self::formatItemTitle($parent);
-        $baseUrl = $parentType::getFormURLWithID($parentId, false);
+        // ITEM_ADD: new solution proposed — notify all actors
+        if (!$isCreate && !in_array('status', $item->updates ?? [], true)) {
+            return; // update but not a status change — ignore
+        }
+
+        $targets = self::collectActorsForItil($parent);
+        unset($targets[$actor]);
+        if (empty($targets)) {
+            return;
+        }
 
         foreach ($targets as $uid => $channel) {
             self::insert([
@@ -660,7 +728,7 @@ class Notification extends CommonDBTM
         // Notify other technicians who have notify_others = 1
         $parentEntityId3 = (int)($parent->fields['entities_id'] ?? 0);
         $others = self::collectOtherTechnicians($targets, $parentType, $parentEntityId3);
-        unset($others[self::actionAuthor($item)]);
+        unset($others[$actor]);
         foreach ($others as $uid => $channel) {
             self::insert([
                 'users_id' => $uid,
@@ -859,15 +927,17 @@ class Notification extends CommonDBTM
         $users  = [];
         $groups = [];
 
+        // Fetch users with their actor type (1=requester, 2=assignee, 3=observer)
         $rs = $DB->request([
-            'SELECT' => ['users_id'],
+            'SELECT' => ['users_id', 'type'],
             'FROM'   => $linkMap[$type]['users'],
             'WHERE'  => [$linkMap[$type]['fk'] => $id],
         ]);
         foreach ($rs as $row) {
             $uid = (int)$row['users_id'];
             if ($uid > 0) {
-                $users[$uid] = 'direct';
+                // Store channel keyed as 'direct', preserve actor_type for filtering
+                $users[$uid] = ['channel' => 'direct', 'actor_type' => (int)$row['type']];
             }
         }
 
@@ -884,7 +954,6 @@ class Notification extends CommonDBTM
         }
 
         if (!empty($groups)) {
-            // Expand groups to include subgroups (recursive_membership support)
             $allGroups = self::expandGroupsWithSubgroups(array_values($groups));
             $rs = $DB->request([
                 'SELECT' => ['users_id'],
@@ -894,7 +963,78 @@ class Notification extends CommonDBTM
             foreach ($rs as $row) {
                 $uid = (int)$row['users_id'];
                 if ($uid > 0 && !isset($users[$uid])) {
-                    $users[$uid] = 'group';
+                    $users[$uid] = ['channel' => 'group', 'actor_type' => 2]; // group members are assignees
+                }
+            }
+        }
+
+        // Return as flat channel map (backward compatible)
+        // actor_type is available via collectActorsForItilWithType()
+        $result = [];
+        foreach ($users as $uid => $data) {
+            $result[$uid] = $data['channel'];
+        }
+        return $result;
+    }
+
+    /**
+     * Same as collectActorsForItil but returns ['channel' => ..., 'actor_type' => ...]
+     * per user. Used when callers need to filter by actor type (e.g. private followups).
+     */
+    private static function collectActorsForItilWithType(CommonDBTM $item): array
+    {
+        global $DB;
+
+        $type = $item::getType();
+        $id   = (int)$item->fields['id'];
+
+        $linkMap = [
+            'Ticket'  => ['users' => 'glpi_tickets_users',  'groups' => 'glpi_groups_tickets',  'fk' => 'tickets_id'],
+            'Change'  => ['users' => 'glpi_changes_users',  'groups' => 'glpi_changes_groups',  'fk' => 'changes_id'],
+            'Problem' => ['users' => 'glpi_problems_users', 'groups' => 'glpi_groups_problems', 'fk' => 'problems_id'],
+        ];
+        if (!isset($linkMap[$type])) {
+            return [];
+        }
+
+        $users  = [];
+        $groups = [];
+
+        $rs = $DB->request([
+            'SELECT' => ['users_id', 'type'],
+            'FROM'   => $linkMap[$type]['users'],
+            'WHERE'  => [$linkMap[$type]['fk'] => $id],
+        ]);
+        foreach ($rs as $row) {
+            $uid = (int)$row['users_id'];
+            if ($uid > 0) {
+                $users[$uid] = ['channel' => 'direct', 'actor_type' => (int)$row['type']];
+            }
+        }
+
+        $rs = $DB->request([
+            'SELECT' => ['groups_id'],
+            'FROM'   => $linkMap[$type]['groups'],
+            'WHERE'  => [$linkMap[$type]['fk'] => $id],
+        ]);
+        foreach ($rs as $row) {
+            $gid = (int)$row['groups_id'];
+            if ($gid > 0) {
+                $groups[$gid] = $gid;
+            }
+        }
+
+        if (!empty($groups)) {
+            $allGroups = self::expandGroupsWithSubgroups(array_values($groups));
+            $rs = $DB->request([
+                'SELECT' => ['users_id'],
+                'FROM'   => 'glpi_groups_users',
+                'WHERE'  => ['groups_id' => $allGroups],
+            ]);
+            foreach ($rs as $row) {
+                $uid = (int)$row['users_id'];
+                if ($uid > 0 && !isset($users[$uid])) {
+                    $users[$uid] = ['channel' => 'group', 'actor_type' => 2];
                 }
             }
         }
@@ -1679,7 +1819,7 @@ class Notification extends CommonDBTM
         return 'other';
     }
 
-    public static function getForUser(int $users_id, int $limit = 100): array
+    public static function getForUser(int $users_id, int $limit = 100, bool $include_read = false): array
     {
         global $DB;
 
@@ -1711,9 +1851,8 @@ class Notification extends CommonDBTM
         // Non-ticket items (Change, Problem, ProjectTask) are also filtered.
         // We use a raw query to support the dynamic JOIN across item types.
         $notifTable = 'glpi_plugin_notifier_notifications';
-        $whereStr = "n.users_id = {$users_id} AND n.is_read = 0";
+        $whereStr = "n.users_id = {$users_id}" . ($include_read ? '' : ' AND n.is_read = 0');
         if ($filter !== null) {
-            // Re-express the pref filter as raw SQL (same logic as QueryExpression)
             $whereStr .= ' AND ' . $filter->getValue();
         }
 
@@ -1934,6 +2073,11 @@ class Notification extends CommonDBTM
         return $rows;
     }
 
+    public static function getForUserIncludingRead(int $users_id, int $limit = 100): array
+    {
+        return self::getForUser($users_id, $limit, true);
+    }
+
     public static function countUnread(int $users_id): int
     {
         global $DB;
@@ -2109,56 +2253,74 @@ class Notification extends CommonDBTM
 
     public static function markAllRead(int $users_id): bool
     {
+        return self::markAllReadByTab($users_id, 'all');
+    }
+
+    public static function markAllReadByTab(int $users_id, string $tab = 'all'): bool
+    {
         global $DB;
-        if ($users_id <= 0) {
-            return false;
+        if ($users_id <= 0) return false;
+
+        // Get all items to determine which tickets belong to this tab
+        $allItems = self::getForUser($users_id, 500);
+
+        // Filter by tab if not 'all'
+        if ($tab !== 'all') {
+            $allItems = array_filter($allItems, fn($i) => ($i['category'] ?? '') === $tab);
         }
 
-        // Mark stored notifications as read.
-        $DB->update(
-            'glpi_plugin_notifier_notifications',
-            ['is_read' => 1, 'date_mod' => date('Y-m-d H:i:s')],
-            ['users_id' => $users_id, 'is_read' => 0]
-        );
+        // Collect IDs of stored notifications to mark as read
+        $storedIds = [];
+        $reactiveTickets = [];
+        foreach ($allItems as $item) {
+            if ($item['is_read']) continue;
+            if (isset($item['id']) && $item['id'] > 0) {
+                $storedIds[] = (int)$item['id'];
+            } elseif (($item['reactive'] ?? false) || !isset($item['id'])) {
+                $reactiveTickets[] = (int)$item['items_id'];
+            }
+        }
 
-        // Also insert read rows for reactive unassigned tickets that have
-        // no stored row yet, so they disappear from the Unread tab.
-        $unassigned = self::getUnassignedTicketsForUser($users_id);
         $now = date('Y-m-d H:i:s');
-        foreach ($unassigned as $u) {
-            if ($u['is_read']) {
-                continue;
+
+        // Mark stored notifications
+        if (!empty($storedIds)) {
+            $DB->update(
+                'glpi_plugin_notifier_notifications',
+                ['is_read' => 1, 'date_mod' => $now],
+                ['users_id' => $users_id, 'is_read' => 0,
+                 new QueryExpression('`id` IN (' . implode(',', $storedIds) . ')')]
+            );
+        } elseif ($tab === 'all') {
+            // Fallback: mark all for this user
+            $DB->update(
+                'glpi_plugin_notifier_notifications',
+                ['is_read' => 1, 'date_mod' => $now],
+                ['users_id' => $users_id, 'is_read' => 0]
+            );
+        }
+
+        // Handle reactive (unassigned) tickets in 'new' or 'all' tab
+        if ($tab === 'all' || $tab === 'new') {
+            $unassigned = self::getUnassignedTicketsForUser($users_id);
+            foreach ($unassigned as $u) {
+                if ($u['is_read']) continue;
+                $ticketId = (int)$u['items_id'];
+                $exists = $DB->request([
+                    'COUNT' => 'cpt', 'FROM' => 'glpi_plugin_notifier_notifications',
+                    'WHERE' => ['users_id' => $users_id, 'itemtype' => 'Ticket',
+                                'items_id' => $ticketId, 'event' => self::EVENT_CREATED],
+                ])->current();
+                if ((int)($exists['cpt'] ?? 0) > 0) continue;
+                $DB->insert('glpi_plugin_notifier_notifications', [
+                    'users_id' => $users_id, 'actor_users_id' => 0,
+                    'itemtype' => 'Ticket', 'items_id' => $ticketId,
+                    'event' => self::EVENT_CREATED, 'channel' => 'broadcast',
+                    'title' => $u['title'], 'message' => $u['message'],
+                    'url' => $u['url'], 'is_read' => 1,
+                    'date_creation' => $now, 'date_mod' => $now,
+                ]);
             }
-            $ticketId = (int)$u['items_id'];
-            // Check if a row already exists to avoid duplicates.
-            $exists = $DB->request([
-                'COUNT' => 'cpt',
-                'FROM'  => 'glpi_plugin_notifier_notifications',
-                'WHERE' => [
-                    'users_id' => $users_id,
-                    'itemtype' => 'Ticket',
-                    'items_id' => $ticketId,
-                    'event'    => self::EVENT_CREATED,
-                ],
-            ]);
-            $row = $exists->current();
-            if ((int)($row['cpt'] ?? 0) > 0) {
-                continue;
-            }
-            $DB->insert('glpi_plugin_notifier_notifications', [
-                'users_id'       => $users_id,
-                'actor_users_id' => 0,
-                'itemtype'       => 'Ticket',
-                'items_id'       => $ticketId,
-                'event'          => self::EVENT_CREATED,
-                'channel'        => 'broadcast',
-                'title'          => $u['title'],
-                'message'        => $u['message'],
-                'url'            => $u['url'],
-                'is_read'        => 1,
-                'date_creation'  => $now,
-                'date_mod'       => $now,
-            ]);
         }
 
         return true;

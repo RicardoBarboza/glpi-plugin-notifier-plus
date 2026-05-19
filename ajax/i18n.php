@@ -35,6 +35,7 @@ echo json_encode([
     'resolvedClosedSeparate' => __('Separados (Resolvidos | Fechados)', 'notifier'),
     'resolvedClosedEnded'  => __('Unificados (Encerrados)', 'notifier'),
     'settings'             => __('Settings', 'notifier'),
+    'viewAll'              => __('View all', 'notifier'),
     'preferencesTitle'     => __('Notification preferences', 'notifier'),
     'preferencesIntro'     => __('Choose which updates you want to receive. Direct updates are about items assigned to you; group updates are about items assigned to one of your groups.', 'notifier'),
     'colDirect'            => __('Assigned to me', 'notifier'),

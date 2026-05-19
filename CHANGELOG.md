@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.4.0] - 2026-05-18
+
+### Adicionado
+- **Página completa de notificações** acessível pelo botão "Ver todas" no sino — lista paginada com 12 colunas: Chamado, Nº, Data/Hora, Status, Prioridade, Entidade, Requerente, Tipo, Usuário, Evento, Detalhe, Ações
+- Filtro por **status atual** do chamado (Novo, Em andamento, Pendente, Resolvido, Fechado)
+- Filtro por **período** (Hoje, Últimos 7 dias, Últimos 30 dias)
+- **7 abas** na página completa espelhando o sino (Todos, Novos, Meus, Equipe, Demais, Resolvidos, Fechados)
+- Toggle "Mostrar lidas" para consultar histórico completo
+- **Agrupamento por ticket** na página completa respeitando o `update_message_style` do usuário (Prioritária / Combinadas / Múltiplas)
+- Modo **Combinadas** com botão de expansão para ver todos os eventos do ticket
+- **Botão Assumir** na aba Novos — técnico assume o chamado sem abrir o ticket, status muda para Em atendimento automaticamente
+- **Refresh automático** da página completa a cada 30 segundos (igual ao sino)
+- "Marcar tudo como lido" na página completa respeita a aba ativa
+- Sino minimiza automaticamente ao entrar na página completa e reabre ao sair
+- **Notificação de solução recusada** — técnico é notificado quando o solicitante recusa a solução proposta (EVENT_SOLUTION_REFUSED)
+- **ITILValidation** — notifica aprovador quando validação é solicitada e atores quando aprovada/recusada
+- **Notificação ao transferir chamado** entre entidades — técnicos da entidade destino são notificados
+- Ator removido do ticket para de receber notificações daquele chamado (Ticket_User/Change_User/Problem_User PURGE)
+- Grupo removido do ticket: membros param de receber notificações, exceto se ainda forem atores por outro caminho
+- Botão "Ver todas" no rodapé do sino
+
+### Corrigido
+- **Followup privado** agora notifica apenas técnicos assignees (type=2), nunca o solicitante
+- Notificação dupla ao recusar solução — EVENT_STATUS_CHANGED suprimido quando causado por recusa de solução
+- CSS do sino isolado do CSS da página completa — estilos do Bootstrap não vazam para dentro do painel
+- Paginação da página completa opera sobre **grupos de tickets**, não eventos individuais — badges e contagens corretas
+- Badges da página completa contam tickets únicos por aba (igual ao sino)
+- `update_message_style` respeitado corretamente na página completa
+- URLs do AJAX da página completa usam `CFG_GLPI.root_doc` (igual ao sino) em vez de `Plugin::getWebDir()`
+- Filtro de status filtra pelo **status atual** do chamado, não pelo tipo do evento da notificação
+- `array_filter` com `match()` dentro de closure substituído por variável `$cutoff` pré-calculada (compatibilidade PHP)
+
 ## [1.3.1] - 2026-05-16
 
 ### Corrigido

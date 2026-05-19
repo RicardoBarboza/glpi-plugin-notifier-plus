@@ -1,14 +1,4 @@
 # Brazilian Portuguese translation for Notifier plugin
-msgid ""
-msgstr ""
-"Project-Id-Version: Notifier\n"
-"POT-Creation-Date: 2026-05-08\n"
-"PO-Revision-Date: 2026-05-08\n"
-"Language: pt_BR\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "Notifier - In-app notifications"
 msgstr "Notifier - Notificações internas"
@@ -18,11 +8,6 @@ msgstr "Notifier"
 
 msgid "Notifications"
 msgstr "Notificações"
-
-msgid "Notification"
-msgid_plural "Notifications"
-msgstr[0] "Notificação"
-msgstr[1] "Notificações"
 
 msgid "Mark all as read"
 msgstr "Marcar tudo como lido"
@@ -141,7 +126,6 @@ msgstr "Ocultar atualizações"
 msgid "Notificar movimentações em chamados que tenho acesso"
 msgstr "Notificar movimentações em chamados que tenho acesso"
 
-
 msgid "New followup"
 msgstr "Novo acompanhamento"
 
@@ -156,7 +140,6 @@ msgstr "Atores alterados"
 
 msgid "Description updated"
 msgstr "Descrição atualizada"
-
 
 msgid "Multiple changes"
 msgstr "Múltiplas alterações"
@@ -173,13 +156,11 @@ msgstr "Mensagens combinadas"
 msgid "Múltiplas alterações"
 msgstr "Múltiplas alterações"
 
-
 msgid "Resolvidos"
 msgstr "Resolvidos"
 
 msgid "Fechados"
 msgstr "Fechados"
-
 
 msgid "Encerrados"
 msgstr "Encerrados"
@@ -199,7 +180,6 @@ msgstr "Separados (Resolvidos | Fechados)"
 msgid "Unificados (Encerrados)"
 msgstr "Unificados (Encerrados)"
 
-
 msgid "Som por fila"
 msgstr "Som por fila"
 
@@ -211,3 +191,57 @@ msgstr "Validação aprovada"
 
 msgid "Validation refused"
 msgstr "Validação recusada"
+
+msgid "Solution refused"
+msgstr "Solução recusada"
+
+msgid "View all"
+msgstr "Ver todas"
+
+msgid "Showing"
+msgstr "Exibindo"
+
+msgid "of"
+msgstr "de"
+
+msgid "unread"
+msgstr "não lidas"
+
+msgid "Open ticket"
+msgstr "Abrir chamado"
+
+msgid "All types"
+msgstr "Todos os tipos"
+
+msgid "All periods"
+msgstr "Todos os períodos"
+
+msgid "Today"
+msgstr "Hoje"
+
+msgid "Last 7 days"
+msgstr "Últimos 7 dias"
+
+msgid "Last 30 days"
+msgstr "Últimos 30 dias"
+
+msgid "Show read"
+msgstr "Mostrar lidas"
+
+msgid "Date / Time"
+msgstr "Data / Hora"
+
+msgid "Type"
+msgstr "Tipo"
+
+msgid "User"
+msgstr "Usuário"
+
+msgid "Content"
+msgstr "Conteúdo"
+
+msgid "Actions"
+msgstr "Ações"
+
+msgid "N°"
+msgstr "Nº"

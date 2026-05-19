@@ -59,6 +59,7 @@
         tabClosed:           'Fechados',
         tabEnded:            'Encerrados',
         settings:            'Settings',
+        viewAll:             'View all',
         preferencesTitle:    'Notification preferences',
         preferencesIntro:    'Choose which updates you want to receive. Direct updates are about items assigned to you; group updates are about items assigned to one of your groups.',
         colDirect:           'Assigned to me',
@@ -197,6 +198,9 @@
             +     '</div>'
             +   '</div>'
             +   '<div class="notifier-bell-panel-footer">'
+            +     '<a href="' + BASE_URL + '/front/notifications.php" class="notifier-bell-viewall">'
+            +       '<i class="fas fa-list"></i> ' + escapeHtml(T.viewAll)
+            +     '</a>'
             +     '<button type="button" class="notifier-bell-settings" title="' + escapeHtml(T.settings) + '">'
             +       '<i class="fas fa-cog"></i> ' + escapeHtml(T.settings)
             +     '</button>'
@@ -1132,8 +1136,22 @@
     function mountAndStart() {
         installBell();
         var wrap = document.querySelector('.notifier-bell-wrap');
-        if (wrap && isStoredCollapsed()) {
-            setCollapsed(wrap, true);
+
+        var onNotificationsPage = window.location.pathname.indexOf('/plugins/notifier/front/notifications.php') !== -1;
+        if (onNotificationsPage) {
+            // Minimize when on full notifications page
+            if (wrap) setCollapsed(wrap, true);
+            try { sessionStorage.setItem('notifier:from_page', '1'); } catch(e) {}
+        } else {
+            // Reopen if coming from notifications page
+            var fromPage = false;
+            try { fromPage = sessionStorage.getItem('notifier:from_page') === '1'; } catch(e) {}
+            if (fromPage) {
+                try { sessionStorage.removeItem('notifier:from_page'); } catch(e) {}
+                if (wrap) setCollapsed(wrap, false);
+            } else if (wrap && isStoredCollapsed()) {
+                setCollapsed(wrap, true);
+            }
         }
 
         // Unlock audio API on first user interaction — browsers block
