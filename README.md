@@ -3,6 +3,7 @@
 **Plugin de notificações em tempo real para o GLPI com suporte a chamados por e-mail, categorização por fila, página completa de notificações, som e filtro por entidade.**
 
 > Fork aprimorado de [dvbnl/glpi-plugin-notifier](https://github.com/dvbnl/glpi-plugin-notifier) e [dinoue/glpi-plugin-notifier](https://github.com/dinoue/glpi-plugin-notifier)  
+> Inspirado também em [ticketanswers](https://github.com/pluginsGLPI/ticketanswers) e [glpi-reservationalert](https://github.com/SantiPT007/glpi-reservationalert)  
 > Desenvolvido por **Ricardo Barboza** — Omium Tecnologias & Negócios
 
 ---
@@ -124,6 +125,10 @@ Português do Brasil, English, Français, Español, Nederlands
 ## Créditos
 
 Fork de [dvbnl/glpi-plugin-notifier](https://github.com/dvbnl/glpi-plugin-notifier) e [dinoue/glpi-plugin-notifier](https://github.com/dinoue/glpi-plugin-notifier).
+
+A página completa de notificações foi inspirada na interface do [glpi-plugin-ticketanswers](https://github.com/pluginsGLPI/ticketanswers) — estrutura de lista detalhada com tipos coloridos, conteúdo resumido e ações por linha.
+
+O suporte a notificações de reserva (em desenvolvimento) foi inspirado no [glpi-reservationalert](https://github.com/SantiPT007/glpi-reservationalert) de Santiago Almendra.
 
 ---
 
