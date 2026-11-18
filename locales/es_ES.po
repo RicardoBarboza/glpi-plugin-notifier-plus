@@ -2,6 +2,14 @@
 # Copyright (C) 2024-2026 DVBNL
 # This file is distributed under the same license as the Notifier plugin.
 #
+msgid ""
+msgstr ""
+"Project-Id-Version: Notifier\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "Notifier - In-app notifications"
 msgstr "Notifier - Notificaciones in-app"
@@ -239,3 +247,217 @@ msgstr "Acciones"
 
 msgid "N°"
 msgstr "N°"
+
+msgid "Notification"
+msgid_plural "Notifications"
+msgstr[0] "Notificación"
+msgstr[1] "Notificaciones"
+
+# Front-end strings (bell, notifications page, assign action)
+
+msgid "New unassigned ticket"
+msgstr "Nuevo ticket sin asignar"
+
+msgid "Notificações"
+msgstr "Notificaciones"
+
+msgid "Voltar"
+msgstr "Volver"
+
+msgid "Mostrar lidas"
+msgstr "Mostrar leídas"
+
+msgid "Marcar tudo como lido"
+msgstr "Marcar todo como leído"
+
+msgid "Todos os status"
+msgstr "Todos los estados"
+
+msgid "Novo"
+msgstr "Nuevo"
+
+msgid "Em andamento"
+msgstr "En curso"
+
+msgid "Planejado"
+msgstr "Planificado"
+
+msgid "Pendente"
+msgstr "En espera"
+
+msgid "Resolvido"
+msgstr "Resuelto"
+
+msgid "Fechado"
+msgstr "Cerrado"
+
+msgid "Todos os períodos"
+msgstr "Todos los períodos"
+
+msgid "Hoje"
+msgstr "Hoy"
+
+msgid "Últimos 7 dias"
+msgstr "Últimos 7 días"
+
+msgid "Últimos 30 dias"
+msgstr "Últimos 30 días"
+
+msgid "Todos"
+msgstr "Todos"
+
+msgid "Novos"
+msgstr "Nuevos"
+
+msgid "Meus"
+msgstr "Míos"
+
+msgid "Equipe"
+msgstr "Equipo"
+
+msgid "Demais"
+msgstr "Otros"
+
+msgid "Resolvidos"
+msgstr "Resueltos"
+
+msgid "Fechados"
+msgstr "Cerrados"
+
+msgid "Chamado"
+msgstr "Ticket"
+
+msgid "Data / Hora"
+msgstr "Fecha / Hora"
+
+msgid "Status"
+msgstr "Estado"
+
+msgid "Prioridade"
+msgstr "Prioridad"
+
+msgid "Entidade"
+msgstr "Entidad"
+
+msgid "Requerente"
+msgstr "Solicitante"
+
+msgid "Tipo"
+msgstr "Tipo"
+
+msgid "Usuário"
+msgstr "Usuario"
+
+msgid "Evento"
+msgstr "Evento"
+
+msgid "Detalhe"
+msgstr "Detalle"
+
+msgid "Ações"
+msgstr "Acciones"
+
+msgid "Carregando..."
+msgstr "Cargando..."
+
+msgid "Novo chamado"
+msgstr "Nuevo ticket"
+
+msgid "Atribuído a mim"
+msgstr "Asignado a mí"
+
+msgid "Novo acompanhamento"
+msgstr "Nuevo seguimiento"
+
+msgid "Nova tarefa"
+msgstr "Nueva tarea"
+
+msgid "Status alterado"
+msgstr "Estado cambiado"
+
+msgid "Solução proposta"
+msgstr "Solución propuesta"
+
+msgid "Solução recusada"
+msgstr "Solución rechazada"
+
+msgid "Validação solicitada"
+msgstr "Validación solicitada"
+
+msgid "Validação aprovada"
+msgstr "Validación aprobada"
+
+msgid "Atualizado"
+msgstr "Actualizado"
+
+msgid "não lidas"
+msgstr "no leídas"
+
+msgid "Sem notificações"
+msgstr "Sin notificaciones"
+
+msgid "Marcar como não lido"
+msgstr "Marcar como no leído"
+
+msgid "Marcar como lido"
+msgstr "Marcar como leído"
+
+msgid "Recolher"
+msgstr "Contraer"
+
+msgid "Expandir"
+msgstr "Expandir"
+
+msgid "Assumir chamado"
+msgstr "Asignarme el ticket"
+
+msgid "Abrir chamado"
+msgstr "Abrir ticket"
+
+msgid "Muito alta"
+msgstr "Muy alta"
+
+msgid "Alta"
+msgstr "Alta"
+
+msgid "Média"
+msgstr "Media"
+
+msgid "Baixa"
+msgstr "Baja"
+
+msgid "Muito baixa"
+msgstr "Muy baja"
+
+msgid "Maior"
+msgstr "Mayor"
+
+msgid "Erro"
+msgstr "Error"
+
+msgid "Exibindo"
+msgstr "Mostrando"
+
+msgid "de"
+msgstr "de"
+
+msgid "Parâmetros inválidos"
+msgstr "Parámetros no válidos"
+
+msgid "Tipo não suportado"
+msgstr "Tipo no soportado"
+
+msgid "Chamado não encontrado"
+msgstr "Ticket no encontrado"
+
+msgid "Você já está atribuído a este chamado"
+msgstr "Ya estás asignado a este ticket"
+
+msgid "Erro ao atribuir chamado"
+msgstr "Error al asignar el ticket"
+
+msgid "Chamado assumido com sucesso"
+msgstr "Ticket asignado correctamente"
+
+msgid "Som de notificação"
+msgstr "Sonido de notificación"

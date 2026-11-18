@@ -74,7 +74,12 @@
         close:               'Close',
         groupedUpdates:      '{n} updates',
         expandGroup:         'Show all updates',
-        collapseGroup:       'Hide updates'
+        collapseGroup:       'Hide updates',
+        statusNew:           'Novo',
+        statusProcessing:    'Em andamento',
+        statusPending:       'Pendente',
+        statusSolved:        'Resolvido',
+        statusClosed:        'Fechado'
     };
 
     var state = {
@@ -496,12 +501,12 @@
     }
 
     var TICKET_STATUS = {
-        1: { label: 'Novo',        color: '#4caf50', icon: 'fa-circle' },
-        2: { label: 'Em andamento', color: '#2196f3', icon: 'fa-circle' },
-        3: { label: 'Em andamento', color: '#2196f3', icon: 'fa-circle' },
-        4: { label: 'Pendente',    color: '#ff9800', icon: 'fa-circle' },
-        5: { label: 'Resolvido',   color: '#9c27b0', icon: 'fa-circle' },
-        6: { label: 'Fechado',     color: '#607d8b', icon: 'fa-circle' },
+        1: { labelKey: 'statusNew',        color: '#4caf50', icon: 'fa-circle' },
+        2: { labelKey: 'statusProcessing', color: '#2196f3', icon: 'fa-circle' },
+        3: { labelKey: 'statusProcessing', color: '#2196f3', icon: 'fa-circle' },
+        4: { labelKey: 'statusPending',    color: '#ff9800', icon: 'fa-circle' },
+        5: { labelKey: 'statusSolved',     color: '#9c27b0', icon: 'fa-circle' },
+        6: { labelKey: 'statusClosed',     color: '#607d8b', icon: 'fa-circle' },
     };
 
     function statusBadgeHtml(status) {
@@ -509,7 +514,7 @@
         var s = TICKET_STATUS[status];
         if (!s) { return ''; }
         return '<span class="notifier-status-badge" style="color:' + s.color + '">'
-            + '<i class="fas fa-circle"></i> ' + escapeHtml(s.label)
+            + '<i class="fas fa-circle"></i> ' + escapeHtml(T[s.labelKey] || '')
             + '</span>';
     }
 

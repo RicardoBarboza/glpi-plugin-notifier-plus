@@ -17,19 +17,19 @@ $itemtype = $_POST['itemtype'] ?? 'Ticket';
 $users_id = (int)Session::getLoginUserID();
 
 if ($items_id <= 0 || !in_array($itemtype, ['Ticket', 'Change', 'Problem'], true)) {
-    echo json_encode(['success' => false, 'message' => 'Parâmetros inválidos']);
+    echo json_encode(['success' => false, 'message' => __('Parâmetros inválidos', 'notifier')]);
     exit;
 }
 
 // Only Ticket supports direct assignment via Ticket_User for now
 if ($itemtype !== 'Ticket') {
-    echo json_encode(['success' => false, 'message' => 'Tipo não suportado']);
+    echo json_encode(['success' => false, 'message' => __('Tipo não suportado', 'notifier')]);
     exit;
 }
 
 $ticket = new Ticket();
 if (!$ticket->getFromDB($items_id)) {
-    echo json_encode(['success' => false, 'message' => 'Chamado não encontrado']);
+    echo json_encode(['success' => false, 'message' => __('Chamado não encontrado', 'notifier')]);
     exit;
 }
 
@@ -42,7 +42,7 @@ $existing = $ticket_user->find([
 ]);
 
 if (!empty($existing)) {
-    echo json_encode(['success' => true, 'message' => 'Você já está atribuído a este chamado']);
+    echo json_encode(['success' => true, 'message' => __('Você já está atribuído a este chamado', 'notifier')]);
     exit;
 }
 
@@ -55,7 +55,7 @@ $result = $ticket_user->add([
 ]);
 
 if (!$result) {
-    echo json_encode(['success' => false, 'message' => 'Erro ao atribuir chamado']);
+    echo json_encode(['success' => false, 'message' => __('Erro ao atribuir chamado', 'notifier')]);
     exit;
 }
 
@@ -67,4 +67,4 @@ if ((int)$ticket->fields['status'] === Ticket::INCOMING) {
     ]);
 }
 
-echo json_encode(['success' => true, 'message' => 'Chamado assumido com sucesso']);
+echo json_encode(['success' => true, 'message' => __('Chamado assumido com sucesso', 'notifier')]);
