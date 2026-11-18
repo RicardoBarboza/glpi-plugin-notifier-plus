@@ -27,7 +27,7 @@ $show_closed    = (bool)($prefs['show_closed'] ?? 1);
 
   <div class="notifier-page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
     <div class="d-flex align-items-center gap-2">
-      <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary me-1" title="Voltar">
+      <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary me-1" title="<?= htmlspecialchars(__('Voltar', 'notifier')) ?>">
         <i class="ti ti-arrow-left"></i>
       </a>
       <i class="ti ti-bell fs-4"></i>
@@ -283,7 +283,7 @@ $show_closed    = (bool)($prefs['show_closed'] ?? 1);
             var expanded = expandedGroups[item.itemtype + ':' + item.items_id];
             expandBtn = '<button class="btn btn-sm btn-outline-secondary notifier-expand-group ms-1" '
                 + 'data-key="' + item.itemtype + ':' + item.items_id + '" '
-                + 'title="' + (expanded ? 'Recolher' : 'Expandir') + '" style="padding:2px 6px;">'
+                + 'title="' + (expanded ? <?= json_encode(__('Recolher', 'notifier')) ?> : <?= json_encode(__('Expandir', 'notifier')) ?>) + '" style="padding:2px 6px;">'
                 + '<i class="ti ' + (expanded ? 'ti-chevron-up' : 'ti-chevron-down') + '" style="font-size:12px;"></i>'
                 + '</button>';
         }
@@ -292,7 +292,7 @@ $show_closed    = (bool)($prefs['show_closed'] ?? 1);
         if (!isSub && item.category === 'new' && item.itemtype === 'Ticket') {
             assignBtn = '<button class="btn btn-sm btn-outline-success notifier-assign-me" '
                 + 'data-items-id="' + item.items_id + '" data-itemtype="' + item.itemtype + '" '
-                + 'title="Assumir chamado"><i class="ti ti-user-plus"></i></button>';
+                + 'title="' + <?= json_encode(__('Assumir chamado', 'notifier')) ?> + '"><i class="ti ti-user-plus"></i></button>';
         }
 
         var eventCell = esc(label);
@@ -314,7 +314,7 @@ $show_closed    = (bool)($prefs['show_closed'] ?? 1);
         row += '<td class="text-muted small">' + esc(item.content || '') + '</td>';
         row += '<td><div class="d-flex gap-1">'
             + '<button class="btn btn-sm btn-outline-secondary notifier-toggle-read" title="' + eyeTitle + '"><i class="ti ' + eyeIcon + '"></i></button>'
-            + '<a href="' + esc(item.url) + '" class="btn btn-sm btn-outline-secondary" title="Abrir chamado"><i class="ti ti-external-link"></i></a>'
+            + '<a href="' + esc(item.url) + '" class="btn btn-sm btn-outline-secondary" title="' + <?= json_encode(__('Abrir chamado', 'notifier')) ?> + '"><i class="ti ti-external-link"></i></a>'
             + assignBtn + expandBtn
             + '</div></td>';
         row += '</tr>';
@@ -322,7 +322,7 @@ $show_closed    = (bool)($prefs['show_closed'] ?? 1);
     }
 
     function buildStatusBadge(status) {
-        var statusLabels = {1:'Novo',2:'Em andamento',3:'Planejado',4:'Pendente',5:'Resolvido',6:'Fechado'};
+        var statusLabels = {1:<?= json_encode(__('Novo', 'notifier')) ?>,2:<?= json_encode(__('Em andamento', 'notifier')) ?>,3:<?= json_encode(__('Planejado', 'notifier')) ?>,4:<?= json_encode(__('Pendente', 'notifier')) ?>,5:<?= json_encode(__('Resolvido', 'notifier')) ?>,6:<?= json_encode(__('Fechado', 'notifier')) ?>};
         var statusColors = {1:'#1D9E75',2:'#378ADD',3:'#7F77DD',4:'#EF9F27',5:'#534AB7',6:'#888780'};
         var label = statusLabels[status] || '';
         var color = statusColors[status] || '#888780';
@@ -330,8 +330,9 @@ $show_closed    = (bool)($prefs['show_closed'] ?? 1);
     }
 
     function buildPrioBadge(priority) {
-        var prioLabels = {1:'Muito alta',2:'Alta',3:'Média',4:'Baixa',5:'Muito baixa',6:'Nenhuma'};
-        var prioColors = {1:'#E24B4A',2:'#EF9F27',3:'#378ADD',4:'#1D9E75',5:'#888780',6:'#888780'};
+        // GLPI scale: 1 = very low ... 5 = very high, 6 = major
+        var prioLabels = {1:<?= json_encode(__('Muito baixa', 'notifier')) ?>,2:<?= json_encode(__('Baixa', 'notifier')) ?>,3:<?= json_encode(__('Média', 'notifier')) ?>,4:<?= json_encode(__('Alta', 'notifier')) ?>,5:<?= json_encode(__('Muito alta', 'notifier')) ?>,6:<?= json_encode(__('Maior', 'notifier')) ?>};
+        var prioColors = {1:'#888780',2:'#1D9E75',3:'#378ADD',4:'#EF9F27',5:'#E24B4A',6:'#A32D2D'};
         var label = prioLabels[priority] || '';
         var color = prioColors[priority] || '#888780';
         return label ? '<span style="background:' + color + '20;color:' + color + ';font-size:11px;font-weight:500;padding:2px 7px;border-radius:4px;white-space:nowrap;">' + label + '</span>' : '';
@@ -364,7 +365,7 @@ $show_closed    = (bool)($prefs['show_closed'] ?? 1);
                         } else {
                             btn.disabled = false;
                             btn.innerHTML = '<i class="ti ti-user-plus"></i>';
-                            alert(data.message || 'Erro');
+                            alert(data.message || <?= json_encode(__('Erro', 'notifier')) ?>);
                         }
                     });
                 });
