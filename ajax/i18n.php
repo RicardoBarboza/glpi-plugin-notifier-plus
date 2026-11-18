@@ -62,4 +62,9 @@ echo json_encode([
     'groupedUpdates'       => __('{n} updates', 'notifier'),
     'expandGroup'          => __('Show all updates', 'notifier'),
     'collapseGroup'        => __('Hide updates', 'notifier'),
+    'statusNew'            => __('Novo', 'notifier'),
+    'statusProcessing'     => __('Em andamento', 'notifier'),
+    'statusPending'        => __('Pendente', 'notifier'),
+    'statusSolved'         => __('Resolvido', 'notifier'),
+    'statusClosed'         => __('Fechado', 'notifier'),
 ]);
